@@ -18,6 +18,9 @@ const newsletterRoutes = require('./routes/newsletter');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust Render's reverse proxy so express-rate-limit can read the real client IP
+app.set('trust proxy', 1);
+
 // ── Security & CORS ────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
