@@ -26,6 +26,7 @@ app.use(helmet());
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:5174',
+    'https://travel-sparsh.vercel.app',
     'http://localhost:3000',
   ],
   credentials: true,
