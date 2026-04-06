@@ -148,7 +148,7 @@ const Navbar = () => {
             />
             {/* Sea blue: #1b3b6b */}
             {/* Text color: #1d3d46 */}
-            <p className='text-[#1d3d46] dark:text-white font-semibold text-lg ml-2'>Travel Sparsh</p>
+            {/* <p className='text-[#1d3d46] dark:text-white font-semibold text-lg ml-2'>Travel Sparsh</p> */}
           </button>
 
           {/* ── Desktop Nav ────────────────────────────────────────────── */}
@@ -223,7 +223,6 @@ const Navbar = () => {
                     <div className="py-1.5">
                       {[
                         { to: '/dashboard', label: 'Dashboard', icon: '🏠' },
-                        { to: '/bookings', label: 'My Bookings', icon: '📋' },
                       ].map(l => (
                         <Link key={l.to} to={l.to}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
@@ -319,9 +318,6 @@ const Navbar = () => {
                 </div>
                 <Link to="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                   🏠 Dashboard
-                </Link>
-                <Link to="/bookings" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                  📋 My Bookings
                 </Link>
                 <button
                   onClick={handleLogout}

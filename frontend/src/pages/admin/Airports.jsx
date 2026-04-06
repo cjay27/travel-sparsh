@@ -1,49 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import AdminLayout, { SearchBar, Badge, Pagination, Modal, FormField, Input, Select } from '../../components/admin/AdminLayout';
-
-const INIT = [
-  { id: 1, code: 'DEL', name: 'Indira Gandhi International Airport', city: 'Delhi', state: 'Delhi', country: 'India', type: 'International', status: 'active' },
-  { id: 2, code: 'BOM', name: 'Chhatrapati Shivaji Maharaj International Airport', city: 'Mumbai', state: 'Maharashtra', country: 'India', type: 'International', status: 'active' },
-  { id: 3, code: 'BLR', name: 'Kempegowda International Airport', city: 'Bangalore', state: 'Karnataka', country: 'India', type: 'International', status: 'active' },
-  { id: 4, code: 'MAA', name: 'Chennai International Airport', city: 'Chennai', state: 'Tamil Nadu', country: 'India', type: 'International', status: 'active' },
-  { id: 5, code: 'CCU', name: 'Netaji Subhas Chandra Bose International Airport', city: 'Kolkata', state: 'West Bengal', country: 'India', type: 'International', status: 'active' },
-  { id: 6, code: 'HYD', name: 'Rajiv Gandhi International Airport', city: 'Hyderabad', state: 'Telangana', country: 'India', type: 'International', status: 'active' },
-  { id: 7, code: 'AMD', name: 'Sardar Vallabhbhai Patel International Airport', city: 'Ahmedabad', state: 'Gujarat', country: 'India', type: 'International', status: 'active' },
-  { id: 8, code: 'PNQ', name: 'Pune International Airport', city: 'Pune', state: 'Maharashtra', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 9, code: 'GOI', name: 'Manohar International Airport (Goa)', city: 'Goa', state: 'Goa', country: 'India', type: 'International', status: 'active' },
-  { id: 10, code: 'JAI', name: 'Jaipur International Airport', city: 'Jaipur', state: 'Rajasthan', country: 'India', type: 'International', status: 'active' },
-  { id: 11, code: 'COK', name: 'Cochin International Airport', city: 'Kochi', state: 'Kerala', country: 'India', type: 'International', status: 'active' },
-  { id: 12, code: 'GAU', name: 'Lokpriya Gopinath Bordoloi International Airport', city: 'Guwahati', state: 'Assam', country: 'India', type: 'International', status: 'active' },
-  { id: 13, code: 'IXC', name: 'Shaheed Bhagat Singh International Airport', city: 'Chandigarh', state: 'Punjab', country: 'India', type: 'International', status: 'active' },
-  { id: 14, code: 'BBI', name: 'Biju Patnaik International Airport', city: 'Bhubaneswar', state: 'Odisha', country: 'India', type: 'International', status: 'active' },
-  { id: 15, code: 'VTZ', name: 'Visakhapatnam Airport', city: 'Visakhapatnam', state: 'Andhra Pradesh', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 16, code: 'TRV', name: 'Trivandrum International Airport', city: 'Trivandrum', state: 'Kerala', country: 'India', type: 'International', status: 'active' },
-  { id: 17, code: 'IXB', name: 'Bagdogra Airport', city: 'Bagdogra', state: 'West Bengal', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 18, code: 'ATQ', name: 'Sri Guru Ram Dass Jee International Airport', city: 'Amritsar', state: 'Punjab', country: 'India', type: 'International', status: 'active' },
-  { id: 19, code: 'SXR', name: 'Sheikh ul-Alam International Airport', city: 'Srinagar', state: 'J&K', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 20, code: 'IXJ', name: 'Jammu Airport (Satwari Airport)', city: 'Jammu', state: 'J&K', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 21, code: 'NAG', name: 'Dr. Babasaheb Ambedkar International Airport', city: 'Nagpur', state: 'Maharashtra', country: 'India', type: 'International', status: 'active' },
-  { id: 22, code: 'IDR', name: 'Devi Ahilyabai Holkar Airport', city: 'Indore', state: 'Madhya Pradesh', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 23, code: 'PAT', name: 'Jay Prakash Narayan International Airport', city: 'Patna', state: 'Bihar', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 24, code: 'BDQ', name: 'Vadodara Airport', city: 'Vadodara', state: 'Gujarat', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 25, code: 'STV', name: 'Surat Airport', city: 'Surat', state: 'Gujarat', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 26, code: 'RPR', name: 'Swami Vivekananda Airport', city: 'Raipur', state: 'Chhattisgarh', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 27, code: 'BHO', name: 'Raja Bhoj Airport', city: 'Bhopal', state: 'Madhya Pradesh', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 28, code: 'AGR', name: 'Agra Airport (Kheria Airport)', city: 'Agra', state: 'Uttar Pradesh', country: 'India', type: 'Domestic', status: 'inactive' },
-  { id: 29, code: 'LKO', name: 'Chaudhary Charan Singh International Airport', city: 'Lucknow', state: 'Uttar Pradesh', country: 'India', type: 'International', status: 'active' },
-  { id: 30, code: 'VNS', name: 'Lal Bahadur Shastri International Airport', city: 'Varanasi', state: 'Uttar Pradesh', country: 'India', type: 'International', status: 'active' },
-  { id: 31, code: 'IXZ', name: 'Veer Savarkar International Airport', city: 'Port Blair', state: 'Andaman & Nicobar', country: 'India', type: 'International', status: 'active' },
-  { id: 32, code: 'SHL', name: 'Shillong Airport (Umroi Airport)', city: 'Shillong', state: 'Meghalaya', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 33, code: 'IMF', name: 'Imphal Airport', city: 'Imphal', state: 'Manipur', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 34, code: 'DIB', name: 'Dibrugarh Airport (Mohanbari Airport)', city: 'Dibrugarh', state: 'Assam', country: 'India', type: 'Domestic', status: 'active' },
-  { id: 35, code: 'TEZ', name: 'Tezpur Airport (Salonibari Airport)', city: 'Tezpur', state: 'Assam', country: 'India', type: 'Domestic', status: 'inactive' },
-];
+import { airportsAPI } from '../../utils/api';
 
 const BLANK = { code: '', name: '', city: '', state: '', country: 'India', type: 'Domestic', status: 'active' };
 const PAGE_SIZE = 10;
 
 const Airports = () => {
-  const [data, setData] = useState(INIT);
+  const [data, setData] = useState([]);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -52,6 +15,24 @@ const Airports = () => {
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState(BLANK);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  // Fetch airports
+  const fetchAirports = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await airportsAPI.adminAll();
+      setData(res.data.data);
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAirports();
+  }, [fetchAirports]);
 
   const filtered = useMemo(() => data.filter(a => {
     const q = search.toLowerCase();
@@ -78,18 +59,32 @@ const Airports = () => {
     return !Object.keys(e).length;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
-    const entry = { ...form, code: form.code.toUpperCase() };
-    if (modal === 'add') {
-      setData(d => [...d, { ...entry, id: Date.now() }]);
-    } else {
-      setData(d => d.map(a => a.id === selected.id ? { ...entry, id: a.id } : a));
+    const entry = { ...form, code: form.code.toUpperCase(), iata_code: form.code.toUpperCase() };
+    try {
+      if (modal === 'add') {
+        await airportsAPI.create(entry);
+      } else {
+        await airportsAPI.update(selected.id, entry);
+      }
+      fetchAirports();
+      closeModal();
+    } catch(err) {
+      alert(err.response?.data?.message || 'Failed to save airport');
     }
-    closeModal();
   };
 
-  const handleDelete = () => { setData(d => d.filter(a => a.id !== selected.id)); closeModal(); };
+  const handleDelete = async () => {
+    try {
+      await airportsAPI.remove(selected.id);
+      setData(d => d.filter(a => a.id !== selected.id));
+      closeModal();
+    } catch(err) {
+      alert('Failed to delete airport');
+    }
+  };
+
   const f = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
 
   return (
@@ -154,7 +149,9 @@ const Airports = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {paged.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={8} className="px-4 py-16 text-center text-slate-400 text-sm">Loading airports...</td></tr>
+              ) : paged.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-16 text-center text-slate-400 text-sm">No airports found</td></tr>
               ) : paged.map(a => (
                 <tr key={a.id} className="hover:bg-slate-50/60 transition-colors">
@@ -168,10 +165,10 @@ const Airports = () => {
                   <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">{a.state}</td>
                   <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">{a.country}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <Badge label={a.type} color={a.type === 'International' ? 'purple' : 'blue'} />
+                    <Badge label={a.type || 'Domestic'} color={a.type === 'International' ? 'purple' : 'blue'} />
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <Badge label={a.status} color={a.status === 'active' ? 'green' : 'red'} />
+                    <Badge label={a.status || 'active'} color={a.status === 'active' ? 'green' : 'red'} />
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex gap-1">

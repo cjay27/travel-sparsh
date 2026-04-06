@@ -11,9 +11,9 @@ USE travel_sparsh;
 -- ── Users ─────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  name        VARCHAR(120)  NOT NULL,
-  email       VARCHAR(180)  NOT NULL UNIQUE,
-  phone       VARCHAR(20)   DEFAULT NULL,
+  name        VARCHAR(255)  NOT NULL,
+  email       VARCHAR(255)  NOT NULL UNIQUE,
+  phone       VARCHAR(255)  DEFAULT NULL,
   password    VARCHAR(255)  NOT NULL,
   role        ENUM('user','admin') NOT NULL DEFAULT 'user',
   is_active   TINYINT(1)   NOT NULL DEFAULT 1,
@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS airports (
   city        VARCHAR(100) NOT NULL,
   state       VARCHAR(100) NOT NULL,
   country     VARCHAR(100) NOT NULL DEFAULT 'India',
+  type        VARCHAR(50)  DEFAULT 'Domestic',
+  status      ENUM('active', 'inactive') DEFAULT 'active',
   is_active   TINYINT(1)  NOT NULL DEFAULT 1,
   created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -39,6 +41,12 @@ CREATE TABLE IF NOT EXISTS airlines (
   code        VARCHAR(10)  NOT NULL UNIQUE,
   name        VARCHAR(150) NOT NULL,
   logo_url    VARCHAR(500) DEFAULT NULL,
+  country     VARCHAR(100) DEFAULT 'India',
+  type        VARCHAR(50)  DEFAULT 'LCC',
+  routes      INT          DEFAULT 0,
+  commission  DECIMAL(5,2) DEFAULT 0.00,
+  status      ENUM('active','inactive','pending') DEFAULT 'active',
+  contact     VARCHAR(200) DEFAULT NULL,
   is_domestic TINYINT(1)  NOT NULL DEFAULT 1,
   is_active   TINYINT(1)  NOT NULL DEFAULT 1,
   created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -51,45 +59,26 @@ CREATE TABLE IF NOT EXISTS packages (
   name         VARCHAR(200) NOT NULL,
   description  TEXT         DEFAULT NULL,
   price        DECIMAL(10,2) NOT NULL DEFAULT 0,
+  max_price    DECIMAL(10,2) NOT NULL DEFAULT 0,
   duration     VARCHAR(50)  DEFAULT NULL,
   destinations VARCHAR(500) DEFAULT NULL,
+  type         VARCHAR(50)  DEFAULT 'Leisure',
+  includes     TEXT         DEFAULT NULL,
   image_url    VARCHAR(500) DEFAULT NULL,
   is_active    TINYINT(1)  NOT NULL DEFAULT 1,
+  status       ENUM('active', 'inactive') DEFAULT 'active',
   created_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- ── Bookings ──────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS bookings (
-  id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  user_id         INT UNSIGNED NOT NULL,
-  pnr             VARCHAR(20)  NOT NULL UNIQUE,
-  trip_type       ENUM('one-way','round-trip','multi-city') NOT NULL DEFAULT 'one-way',
-  from_city       VARCHAR(100) NOT NULL,
-  to_city         VARCHAR(100) NOT NULL,
-  departure_date  DATE         NOT NULL,
-  return_date     DATE         DEFAULT NULL,
-  airline         VARCHAR(100) DEFAULT NULL,
-  cabin_class     VARCHAR(50)  DEFAULT 'Economy',
-  adults          TINYINT UNSIGNED NOT NULL DEFAULT 1,
-  children        TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  infants         TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  total_fare      DECIMAL(10,2) NOT NULL DEFAULT 0,
-  status          ENUM('pending','confirmed','cancelled','completed') NOT NULL DEFAULT 'pending',
-  created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_pnr (pnr),
-  INDEX idx_user (user_id),
-  INDEX idx_status (status)
-) ENGINE=InnoDB;
+
 
 -- ── Contact Enquiries ──────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS contacts (
   id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  name            VARCHAR(120) NOT NULL,
-  email           VARCHAR(180) NOT NULL,
-  phone           VARCHAR(20)  NOT NULL,
+  name            VARCHAR(255) NOT NULL,
+  email           VARCHAR(255) NOT NULL,
+  phone           VARCHAR(255) NOT NULL,
   trip_type       VARCHAR(50)  DEFAULT NULL,
   from_city       VARCHAR(100) DEFAULT NULL,
   to_city         VARCHAR(100) DEFAULT NULL,
@@ -135,9 +124,13 @@ CREATE TABLE IF NOT EXISTS admin_logs (
 
 -- Default admin user (password: Admin@123)
 INSERT IGNORE INTO users (name, email, phone, password, role)
-VALUES ('Admin', 'admin@travelsparsh.com', '+919876543210',
-        '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
-
+VALUES (
+  'Admin',
+  'admin@travelsparsh.com',
+  '+919876543210',
+  '$2b$10$wH8Xz9kQ8mYw6Q3u5Y6QvO2YF9vYJr0lC0m0XQzYlQZ1z6KXw2H7K',
+  'admin'
+);
 -- Major Indian airports
 INSERT IGNORE INTO airports (iata_code, name, city, state) VALUES
   ('DEL', 'Indira Gandhi International Airport', 'New Delhi', 'Delhi'),
@@ -169,7 +162,6 @@ INSERT IGNORE INTO airports (iata_code, name, city, state) VALUES
 INSERT IGNORE INTO airlines (code, name, is_domestic) VALUES
   ('6E', 'IndiGo', 1),
   ('AI', 'Air India', 1),
-  ('SG', 'SpiceJet', 1),
   ('UK', 'Vistara', 1),
   ('G8', 'GoAir', 1),
   ('I5', 'AirAsia India', 1),

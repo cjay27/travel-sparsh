@@ -1,23 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import AdminLayout, { SearchBar, Badge, Pagination, Modal, FormField, Input, Select } from '../../components/admin/AdminLayout';
-
-const INIT = [
-  { id: 1, name: 'IndiGo', iata: '6E', country: 'India', type: 'LCC', routes: 85, commission: '3.5', status: 'active', contact: 'partnerships@indigo.in', joined: '2022-01-15' },
-  { id: 2, name: 'Air India', iata: 'AI', country: 'India', type: 'FSC', routes: 120, commission: '4.0', status: 'active', contact: 'partners@airindia.in', joined: '2021-06-20' },
-  { id: 3, name: 'SpiceJet', iata: 'SG', country: 'India', type: 'LCC', routes: 64, commission: '3.0', status: 'active', contact: 'trade@spicejet.com', joined: '2022-03-10' },
-  { id: 4, name: 'Vistara', iata: 'UK', country: 'India', type: 'FSC', routes: 42, commission: '4.5', status: 'inactive', contact: 'partners@airvistara.com', joined: '2022-08-01' },
-  { id: 5, name: 'GoAir', iata: 'G8', country: 'India', type: 'LCC', routes: 30, commission: '3.0', status: 'inactive', contact: 'trade@goair.in', joined: '2023-01-05' },
-  { id: 6, name: 'AirAsia India', iata: 'I5', country: 'India', type: 'LCC', routes: 25, commission: '3.2', status: 'active', contact: 'partners@airasia.in', joined: '2022-11-12' },
-  { id: 7, name: 'Akasa Air', iata: 'QP', country: 'India', type: 'LCC', routes: 18, commission: '3.0', status: 'active', contact: 'trade@akasaair.in', joined: '2023-04-20' },
-  { id: 8, name: 'Emirates', iata: 'EK', country: 'UAE', type: 'FSC', routes: 200, commission: '5.0', status: 'active', contact: 'india@emirates.com', joined: '2021-09-15' },
-  { id: 9, name: 'Qatar Airways', iata: 'QR', country: 'Qatar', type: 'FSC', routes: 180, commission: '5.5', status: 'active', contact: 'india@qatarairways.com', joined: '2021-10-01' },
-  { id: 10, name: 'Singapore Airlines', iata: 'SQ', country: 'Singapore', type: 'FSC', routes: 145, commission: '5.0', status: 'active', contact: 'india@singaporeair.com', joined: '2022-02-14' },
-  { id: 11, name: 'Lufthansa', iata: 'LH', country: 'Germany', type: 'FSC', routes: 160, commission: '4.8', status: 'active', contact: 'india@lufthansa.com', joined: '2022-05-20' },
-  { id: 12, name: 'British Airways', iata: 'BA', country: 'UK', type: 'FSC', routes: 130, commission: '4.5', status: 'pending', contact: 'india@ba.com', joined: '2023-06-01' },
-  { id: 13, name: 'Air France', iata: 'AF', country: 'France', type: 'FSC', routes: 140, commission: '4.7', status: 'active', contact: 'india@airfrance.com', joined: '2022-09-10' },
-  { id: 14, name: 'Thai Airways', iata: 'TG', country: 'Thailand', type: 'FSC', routes: 80, commission: '4.2', status: 'pending', contact: 'india@thaiair.com', joined: '2023-07-15' },
-  { id: 15, name: 'Star Air', iata: 'S5', country: 'India', type: 'Regional', routes: 12, commission: '2.8', status: 'active', contact: 'trade@starair.in', joined: '2023-08-20' },
-];
+import { airlinesAPI } from '../../utils/api';
 
 const BLANK = { name: '', iata: '', country: 'India', type: 'LCC', routes: '', commission: '', status: 'active', contact: '', joined: '' };
 const PAGE_SIZE = 8;
@@ -26,7 +9,7 @@ const statusColor = { active: 'green', inactive: 'red', pending: 'amber' };
 const typeColor = { LCC: 'blue', FSC: 'purple', Regional: 'slate' };
 
 const Airlines = () => {
-  const [data, setData] = useState(INIT);
+  const [data, setData] = useState([]);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [page, setPage] = useState(1);
@@ -34,10 +17,37 @@ const Airlines = () => {
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState(BLANK);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  // Fetch airlines
+  const fetchAirlines = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await airlinesAPI.adminAll();
+      const mapped = res.data.data.map(a => ({
+        ...a,
+        status: a.status || 'active',
+        type: a.type || 'LCC',
+        country: a.country || 'India',
+        routes: a.routes || 0,
+        commission: a.commission || 0,
+        contact: a.contact || ''
+      }));
+      setData(mapped);
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAirlines();
+  }, [fetchAirlines]);
 
   const filtered = useMemo(() => data.filter(a => {
     const q = search.toLowerCase();
-    const matchQ = !q || a.name.toLowerCase().includes(q) || a.iata.toLowerCase().includes(q) || a.country.toLowerCase().includes(q);
+    const matchQ = !q || a.name.toLowerCase().includes(q) || (a.iata && a.iata.toLowerCase().includes(q)) || (a.country && a.country.toLowerCase().includes(q));
     const matchS = filterStatus === 'all' || a.status === filterStatus;
     return matchQ && matchS;
   }), [data, search, filterStatus]);
@@ -59,19 +69,30 @@ const Airlines = () => {
     return !Object.keys(e).length;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
-    if (modal === 'add') {
-      setData(d => [...d, { ...form, id: Date.now(), routes: Number(form.routes) || 0 }]);
-    } else {
-      setData(d => d.map(a => a.id === selected.id ? { ...form, id: a.id, routes: Number(form.routes) || 0 } : a));
+    try {
+      const payload = { ...form, routes: Number(form.routes) || 0, commission: Number(form.commission) || 0, code: form.iata.toUpperCase() };
+      if (modal === 'add') {
+        await airlinesAPI.create(payload);
+      } else {
+        await airlinesAPI.update(selected.id, payload);
+      }
+      fetchAirlines();
+      closeModal();
+    } catch(err) {
+      alert(err.response?.data?.message || 'Failed to save airline');
     }
-    closeModal();
   };
 
-  const handleDelete = () => {
-    setData(d => d.filter(a => a.id !== selected.id));
-    closeModal();
+  const handleDelete = async () => {
+    try {
+      await airlinesAPI.remove(selected.id);
+      setData(d => d.filter(a => a.id !== selected.id));
+      closeModal();
+    } catch(err) {
+      alert('Failed to delete airline');
+    }
   };
 
   const f = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
@@ -115,7 +136,9 @@ const Airlines = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {paged.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={10} className="px-4 py-16 text-center text-slate-400 text-sm">Loading airlines...</td></tr>
+              ) : paged.length === 0 ? (
                 <tr><td colSpan={10} className="px-4 py-16 text-center text-slate-400 text-sm">No airlines found</td></tr>
               ) : paged.map(a => (
                 <tr key={a.id} className="hover:bg-slate-50/60 transition-colors">
@@ -125,8 +148,8 @@ const Airlines = () => {
                   <td className="px-4 py-3 whitespace-nowrap"><Badge label={a.type} color={typeColor[a.type] ?? 'slate'} /></td>
                   <td className="px-4 py-3 text-slate-700 font-semibold text-xs">{a.routes}</td>
                   <td className="px-4 py-3 text-emerald-700 font-bold text-xs whitespace-nowrap">{a.commission}%</td>
-                  <td className="px-4 py-3 text-slate-500 text-xs max-w-[150px] truncate">{a.contact}</td>
-                  <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">{a.joined}</td>
+                  <td className="px-4 py-3 text-slate-500 text-xs max-w-[150px] truncate">{a.contact || 'N/A'}</td>
+                  <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">{a.joined || 'N/A'}</td>
                   <td className="px-4 py-3 whitespace-nowrap"><Badge label={a.status} color={statusColor[a.status]} /></td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex gap-1">
@@ -175,7 +198,7 @@ const Airlines = () => {
             <Input value={form.contact} onChange={f('contact')} placeholder="partners@airline.com" className={errors.contact ? 'border-red-400' : ''} />
           </FormField>
           <FormField label="Partner Since">
-            <Input type="date" value={form.joined} onChange={f('joined')} />
+            {modal === 'add' ? <Input type="date" value={form.joined} onChange={f('joined')} /> : <Input type="date" value={form.joined} readOnly className="bg-slate-50 opacity-50" />}
           </FormField>
           <FormField label="Status">
             <Select value={form.status} onChange={f('status')}>

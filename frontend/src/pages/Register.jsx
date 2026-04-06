@@ -166,9 +166,8 @@ const Register = () => {
                     {[1, 2, 3, 4, 5].map((level) => (
                       <div
                         key={level}
-                        className={`flex-1 h-1 rounded-full transition-all duration-300 ${
-                          level <= passwordStrength ? strengthColors[passwordStrength] : 'bg-slate-200 dark:bg-slate-700'
-                        }`}
+                        className={`flex-1 h-1 rounded-full transition-all duration-300 ${level <= passwordStrength ? strengthColors[passwordStrength] : 'bg-slate-200 dark:bg-slate-700'
+                          }`}
                       />
                     ))}
                   </div>
@@ -248,8 +247,8 @@ const Register = () => {
           <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700">
             <p className="text-xs text-slate-500 dark:text-slate-400 text-center mb-3">What you get for free:</p>
             <div className="grid grid-cols-2 gap-2">
-              {['✓ Book & track flights', '✓ Exclusive member deals', '✓ Booking history', '✓ 24/7 support'].map((b) => (
-                <div key={b} className="text-xs text-slate-600 dark:text-slate-400">{b}</div>
+              {['✓ Track travel enquiries', '✓ Exclusive expert quotes', '✓ Manage your travel profile', '✓ 24/7 expert support'].map((b) => (
+                <div key={b} className="text-xs text-slate-600 dark:text-slate-400 font-medium">{b}</div>
               ))}
             </div>
           </div>

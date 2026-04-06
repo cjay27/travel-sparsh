@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/', async (_req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, iata_code, name, city, state, country FROM airports WHERE is_active = 1 ORDER BY city'
+      "SELECT id, iata_code as code, name, city, state, country, type, status FROM airports WHERE is_active = 1 AND status = 'active' ORDER BY city"
     );
     res.json({ success: true, data: rows });
   } catch {
@@ -38,7 +38,7 @@ router.get('/search', async (req, res) => {
 // GET /api/airports/admin/all
 router.get('/admin/all', authenticate, requireAdmin, async (_req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM airports ORDER BY city');
+    const [rows] = await pool.query('SELECT *, iata_code as code FROM airports ORDER BY city');
     res.json({ success: true, data: rows });
   } catch {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -55,11 +55,11 @@ router.post('/', authenticate, requireAdmin,
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(422).json({ success: false, errors: errors.array() });
 
-    const { iata_code, name, city, state, country = 'India' } = req.body;
+    const { code, name, city, state, country = 'India', type = 'Domestic', status = 'active' } = req.body;
     try {
       const [result] = await pool.query(
-        'INSERT INTO airports (iata_code, name, city, state, country) VALUES (?, ?, ?, ?, ?)',
-        [iata_code.toUpperCase(), name, city, state, country]
+        'INSERT INTO airports (iata_code, name, city, state, country, type, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [code.toUpperCase(), name, city, state, country, type, status]
       );
       res.status(201).json({ success: true, id: result.insertId });
     } catch (err) {
@@ -72,11 +72,11 @@ router.post('/', authenticate, requireAdmin,
 
 // PUT /api/airports/:id
 router.put('/:id', authenticate, requireAdmin, async (req, res) => {
-  const { iata_code, name, city, state, country, is_active } = req.body;
+  const { code, name, city, state, country, type, status } = req.body;
   try {
     await pool.query(
-      'UPDATE airports SET iata_code=?, name=?, city=?, state=?, country=?, is_active=? WHERE id=?',
-      [iata_code, name, city, state, country, is_active ?? 1, req.params.id]
+      'UPDATE airports SET iata_code=?, name=?, city=?, state=?, country=?, type=?, status=? WHERE id=?',
+      [code, name, city, state, country, type, status, req.params.id]
     );
     res.json({ success: true });
   } catch {

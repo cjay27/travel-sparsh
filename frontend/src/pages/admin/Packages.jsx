@@ -1,20 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import AdminLayout, { SearchBar, Badge, Pagination, Modal, FormField, Input, Select } from '../../components/admin/AdminLayout';
-
-const INIT = [
-  { id: 1, name: 'Goa Beach Holiday', type: 'Family', destination: 'Goa', duration: '5D/4N', minPrice: 35000, maxPrice: 55000, includes: 'Flight, Hotel, Transfers', status: 'active', bookings: 45, rating: 4.8 },
-  { id: 2, name: 'Royal Rajasthan', type: 'Leisure', destination: 'Jaipur, Jodhpur, Udaipur', duration: '7D/6N', minPrice: 52000, maxPrice: 85000, includes: 'Flight, Hotel, Guided Tours', status: 'active', bookings: 32, rating: 4.9 },
-  { id: 3, name: 'Kashmir Honeymoon', type: 'Honeymoon', destination: 'Srinagar, Gulmarg', duration: '6D/5N', minPrice: 65000, maxPrice: 1100000, includes: 'Flight, Houseboat, Hotel, Shikara', status: 'active', bookings: 28, rating: 5.0 },
-  { id: 4, name: 'Kerala Backwaters', type: 'Leisure', destination: 'Kochi, Munnar, Alleppey', duration: '6D/5N', minPrice: 42000, maxPrice: 70000, includes: 'Flight, Hotel, Houseboat, Transfers', status: 'active', bookings: 38, rating: 4.7 },
-  { id: 5, name: 'Corporate Bangalore', type: 'Corporate', destination: 'Bangalore', duration: '3D/2N', minPrice: 18000, maxPrice: 30000, includes: 'Flight, Business Hotel, Airport Transfer', status: 'active', bookings: 62, rating: 4.6 },
-  { id: 6, name: 'Andaman Adventure', type: 'Adventure', destination: 'Port Blair, Havelock', duration: '7D/6N', minPrice: 58000, maxPrice: 95000, includes: 'Flight, Hotel, Water Sports, Tours', status: 'active', bookings: 21, rating: 4.8 },
-  { id: 7, name: 'Manali Snow Trip', type: 'Adventure', destination: 'Manali, Solang Valley', duration: '5D/4N', minPrice: 28000, maxPrice: 45000, includes: 'Flight, Hotel, Activities, Transfers', status: 'active', bookings: 44, rating: 4.7 },
-  { id: 8, name: 'Family Mysore Pack', type: 'Family', destination: 'Mysore, Coorg', duration: '4D/3N', minPrice: 24000, maxPrice: 38000, includes: 'Flight, Hotel, Park Entry, Transfers', status: 'inactive', bookings: 15, rating: 4.5 },
-  { id: 9, name: 'Luxury Maldives', type: 'Honeymoon', destination: 'Maldives', duration: '5D/4N', minPrice: 120000, maxPrice: 200000, includes: 'Flight, Water Villa, All-inclusive, Transfers', status: 'active', bookings: 12, rating: 5.0 },
-  { id: 10, name: 'Delhi Heritage Tour', type: 'Leisure', destination: 'Delhi, Agra', duration: '4D/3N', minPrice: 22000, maxPrice: 35000, includes: 'Flight, Hotel, Guided Tours, Entry Tickets', status: 'inactive', bookings: 9, rating: 4.4 },
-  { id: 11, name: 'Sikkim Valley Trek', type: 'Adventure', destination: 'Gangtok, Pelling', duration: '6D/5N', minPrice: 32000, maxPrice: 55000, includes: 'Flight, Hotel, Trek Guide, Permits', status: 'active', bookings: 18, rating: 4.6 },
-  { id: 12, name: 'Corporate Chennai', type: 'Corporate', destination: 'Chennai', duration: '2D/1N', minPrice: 12000, maxPrice: 20000, includes: 'Flight, Business Hotel, Transfer', status: 'active', bookings: 41, rating: 4.5 },
-];
+import { packagesAPI } from '../../utils/api';
 
 const BLANK = { name: '', type: 'Leisure', destination: '', duration: '', minPrice: '', maxPrice: '', includes: '', status: 'active' };
 const PAGE_SIZE = 8;
@@ -22,7 +8,7 @@ const PAGE_SIZE = 8;
 const typeColor = { Family: 'blue', Leisure: 'green', Honeymoon: 'purple', Corporate: 'slate', Adventure: 'amber' };
 
 const Packages = () => {
-  const [data, setData] = useState(INIT);
+  const [data, setData] = useState([]);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [page, setPage] = useState(1);
@@ -30,12 +16,43 @@ const Packages = () => {
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState(BLANK);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(true);
 
-  const types = ['all', ...Array.from(new Set(INIT.map(p => p.type)))];
+  // Fetch all packages automatically
+  const fetchPackages = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await packagesAPI.adminAll();
+      const mapped = res.data.data.map(p => ({
+        id: p.id,
+        name: p.name,
+        type: p.type || 'Leisure',
+        destination: p.destinations || '',
+        duration: p.duration || '',
+        minPrice: p.price || 0,
+        maxPrice: p.max_price || 0,
+        includes: p.includes || '',
+        status: p.status || 'active',
+        bookings: p.bookings || 0,
+        rating: p.rating || 0
+      }));
+      setData(mapped);
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPackages();
+  }, [fetchPackages]);
+
+  const types = ['all', 'Leisure', 'Family', 'Honeymoon', 'Adventure', 'Corporate', 'Custom'];
 
   const filtered = useMemo(() => data.filter(p => {
     const q = search.toLowerCase();
-    const matchQ = !q || p.name.toLowerCase().includes(q) || p.destination.toLowerCase().includes(q) || p.type.toLowerCase().includes(q);
+    const matchQ = !q || p.name.toLowerCase().includes(q) || (p.destination && p.destination.toLowerCase().includes(q)) || p.type.toLowerCase().includes(q);
     const matchT = filterType === 'all' || p.type === filterType;
     return matchQ && matchT;
   }), [data, search, filterType]);
@@ -57,19 +74,32 @@ const Packages = () => {
     return !Object.keys(e).length;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
-    if (modal === 'add') {
-      setData(d => [...d, { ...form, id: Date.now(), bookings: 0, rating: 0, minPrice: Number(form.minPrice) || 0, maxPrice: Number(form.maxPrice) || 0 }]);
-    } else {
-      setData(d => d.map(p => p.id === selected.id ? { ...form, id: p.id, bookings: p.bookings, rating: p.rating, minPrice: Number(form.minPrice) || 0, maxPrice: Number(form.maxPrice) || 0 } : p));
+    try {
+      if (modal === 'add') {
+        await packagesAPI.create({ ...form, minPrice: Number(form.minPrice) || 0, maxPrice: Number(form.maxPrice) || 0 });
+      } else {
+        await packagesAPI.update(selected.id, { ...form, minPrice: Number(form.minPrice) || 0, maxPrice: Number(form.maxPrice) || 0 });
+      }
+      fetchPackages();
+      closeModal();
+    } catch(err) {
+      alert('Failed to save package');
     }
-    closeModal();
   };
 
-  const handleDelete = () => { setData(d => d.filter(p => p.id !== selected.id)); closeModal(); };
-  const f = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
+  const handleDelete = async () => {
+    try {
+      await packagesAPI.remove(selected.id);
+      setData(d => d.filter(p => p.id !== selected.id));
+      closeModal();
+    } catch(err) {
+      alert('Failed to delete package');
+    }
+  };
 
+  const f = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
   const fmt = (n) => `₹${n >= 100000 ? (n / 100000).toFixed(1) + 'L' : (n / 1000).toFixed(0) + 'K'}`;
 
   return (
@@ -109,23 +139,25 @@ const Packages = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {paged.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={10} className="px-4 py-16 text-center text-slate-400 text-sm">Loading packages...</td></tr>
+              ) : paged.length === 0 ? (
                 <tr><td colSpan={10} className="px-4 py-16 text-center text-slate-400 text-sm">No packages found</td></tr>
               ) : paged.map(p => (
                 <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-4 py-3 font-bold text-slate-900 whitespace-nowrap max-w-[160px] truncate">{p.name}</td>
+                  <td className="px-4 py-3 font-bold text-slate-900 whitespace-nowrap max-w-[160px] truncate">{p.name || '--'}</td>
                   <td className="px-4 py-3 whitespace-nowrap"><Badge label={p.type} color={typeColor[p.type] ?? 'slate'} /></td>
-                  <td className="px-4 py-3 text-slate-600 text-xs max-w-[150px] truncate">{p.destination}</td>
-                  <td className="px-4 py-3 text-slate-600 text-xs whitespace-nowrap font-semibold">{p.duration}</td>
+                  <td className="px-4 py-3 text-slate-600 text-xs max-w-[150px] truncate">{p.destination || '--'}</td>
+                  <td className="px-4 py-3 text-slate-600 text-xs whitespace-nowrap font-semibold">{p.duration || '--'}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className="text-xs font-bold text-emerald-700">{fmt(p.minPrice)}</span>
                     <span className="text-slate-300 mx-1">—</span>
                     <span className="text-xs font-bold text-emerald-700">{fmt(p.maxPrice)}</span>
                   </td>
-                  <td className="px-4 py-3 text-slate-400 text-xs max-w-[160px] truncate">{p.includes}</td>
-                  <td className="px-4 py-3 font-black text-slate-900 text-sm">{p.bookings}</td>
+                  <td className="px-4 py-3 text-slate-400 text-xs max-w-[160px] truncate">{p.includes || '--'}</td>
+                  <td className="px-4 py-3 font-black text-slate-900 text-sm">{p.bookings || 0}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="text-amber-500 font-bold text-xs">★ {p.rating.toFixed(1)}</span>
+                    <span className="text-amber-500 font-bold text-xs">★ {Number(p.rating || 0).toFixed(1)}</span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap"><Badge label={p.status} color={p.status === 'active' ? 'green' : 'red'} /></td>
                   <td className="px-4 py-3 whitespace-nowrap">
@@ -138,7 +170,7 @@ const Packages = () => {
                       </button>
                     </div>
                   </td>
-                </tr>
+                 </tr>
               ))}
             </tbody>
           </table>

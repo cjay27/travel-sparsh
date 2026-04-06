@@ -43,20 +43,10 @@ export const authAPI = {
   logout:   ()     => api.post('/auth/logout'),
 };
 
-// Bookings
-export const bookingsAPI = {
-  getMyBookings: (params)  => api.get('/bookings/my', { params }),
-  createBooking: (data)    => api.post('/bookings', data),
-  checkPNR:      (pnr)     => api.get(`/bookings/pnr/${pnr}`),
-  cancelBooking: (id)      => api.patch(`/bookings/${id}/cancel`),
-  // Admin
-  getAllBookings: (params)  => api.get('/bookings/admin/all', { params }),
-  updateStatus:  (id, status) => api.patch(`/bookings/admin/${id}/status`, { status }),
-};
-
 // Contact / Enquiries
 export const contactAPI = {
   submitContact: (data)    => api.post('/contact', data),
+  getMyEnquiries:(params)  => api.get('/contact/my', { params }),
   subscribe:     (email)   => api.post('/contact/subscribe', { email }),
   // Admin
   getAll:        (params)  => api.get('/contact/admin/all', { params }),
@@ -85,17 +75,6 @@ export const airlinesAPI = {
   remove:    (id)   => api.delete(`/airlines/${id}`),
 };
 
-// Payments (Razorpay — kept for BookingPage compatibility)
-export const paymentsAPI = {
-  createOrder:   (data) => api.post('/payments/create-order', data),
-  verifyPayment: (data) => api.post('/payments/verify', data),
-};
-
-// Flights (kept for FlightResults page compatibility)
-export const flightsAPI = {
-  search: (params) => api.get('/flights/search', { params, timeout: 30000 }),
-};
-
 // Packages
 export const packagesAPI = {
   getAll:    ()     => api.get('/packages'),
@@ -113,6 +92,11 @@ export const adminAPI = {
   getUsers:    (params)      => api.get('/admin/users', { params }),
   updateUser:  (id, data)    => api.patch(`/admin/users/${id}`, data),
   deleteUser:  (id)          => api.delete(`/admin/users/${id}`),
+  // Admin Users
+  getAdmins:   ()            => api.get('/admin/admins'),
+  createAdmin: (data)        => api.post('/admin/admins', data),
+  deleteAdmin: (id)          => api.delete(`/admin/admins/${id}`),
 };
+
 
 export default api;

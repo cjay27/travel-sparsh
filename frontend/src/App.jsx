@@ -12,17 +12,15 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import BookingHistory from './pages/BookingHistory';
-import FlightResults from './pages/FlightResults';
-import BookingPage from './pages/BookingPage';
-import BookingSuccess from './pages/BookingSuccess';
 // Admin Pages
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Airlines from './pages/admin/Airlines';
 import Users from './pages/admin/Users';
+import Customers from './pages/admin/Customers';
 import Packages from './pages/admin/Packages';
 import Airports from './pages/admin/Airports';
+
 
 // Layout wrapper to handle pages that don't need footer
 const AppLayout = ({ children }) => {
@@ -69,19 +67,18 @@ function App() {
               <Route path="/about" element={<AppLayout><About /></AppLayout>} />
               <Route path="/contact" element={<AppLayout><Contact /></AppLayout>} />
               <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
-              <Route path="/flights" element={<AppLayout><FlightResults /></AppLayout>} />
-              <Route path="/book" element={<AppLayout><ProtectedRoute><BookingPage /></ProtectedRoute></AppLayout>} />
-              <Route path="/booking-success" element={<AppLayout><ProtectedRoute><BookingSuccess /></ProtectedRoute></AppLayout>} />
+
               <Route path="/dashboard" element={<AppLayout><ProtectedRoute><Dashboard /></ProtectedRoute></AppLayout>} />
-              <Route path="/bookings" element={<AppLayout><ProtectedRoute><BookingHistory /></ProtectedRoute></AppLayout>} />
 
               {/* Admin routes (no Navbar/Footer, AdminContext handles auth) */}
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/airlines" element={<Airlines />} />
               <Route path="/admin/users" element={<Users />} />
+              <Route path="/admin/customers" element={<Customers />} />
               <Route path="/admin/packages" element={<Packages />} />
               <Route path="/admin/airports" element={<Airports />} />
+
 
               {/* 404 */}
               <Route path="*" element={<AppLayout><NotFound /></AppLayout>} />

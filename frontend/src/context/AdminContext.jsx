@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { authAPI } from '../utils/api';
 
-// Demo admin credentials — replace with real API call in production
-const ADMIN_CREDS = { email: 'admin@travelsparsh.com', password: 'Admin@123' };
+// Demo admin credentials — replacing with real API call in production
+// const ADMIN_CREDS = { email: 'admin@travelsparsh.com', password: 'Admin@123' };
 const STORAGE_KEY = 'ts_admin_session';
 
 const AdminContext = createContext();
@@ -16,24 +17,43 @@ export const AdminProvider = ({ children }) => {
   const login = useCallback(async (email, password) => {
     setError('');
     setLoading(true);
-    // Simulate network delay
-    await new Promise(r => setTimeout(r, 800));
-    if (email === ADMIN_CREDS.email && password === ADMIN_CREDS.password) {
-      const session = { email, name: 'Admin', role: 'admin', loginAt: new Date().toISOString() };
+    
+    try {
+      // Using real API instead of mock
+      const res = await authAPI.login({ email, password });
+      const { token, user } = res.data;
+      
+      // Check if user is actually admin
+      if (user.role !== 'admin') {
+        setError('Unauthorized: Admin access required.');
+        setLoading(false);
+        return false;
+      }
+      
+      const session = { ...user, loginAt: new Date().toISOString() };
       setAdmin(session);
+      
+      // Store standard tokens so that utils/api.js intercepts them properly
+      localStorage.setItem('travel_sparsh_token', token);
+      localStorage.setItem('travel_sparsh_user', JSON.stringify(user));
+      // Also store admin session
       localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      
       setLoading(false);
       return true;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Invalid admin credentials');
+      setLoading(false);
+      return false;
     }
-    setError('Invalid admin credentials..');
-    // Try admin@travelsparsh.com / Admin@123');
-    setLoading(false);
-    return false;
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try { await authAPI.logout(); } catch (err) {}
     setAdmin(null);
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('travel_sparsh_token');
+    localStorage.removeItem('travel_sparsh_user');
   }, []);
 
   return (

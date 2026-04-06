@@ -8,7 +8,7 @@ const { authenticate } = require('../middleware/auth');
 const router = express.Router();
 
 const signToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
 
 // POST /api/auth/register
 router.post('/register',
@@ -40,6 +40,7 @@ router.post('/register',
         user: { id: result.insertId, name, email, phone, role: 'user' },
       });
     } catch (err) {
+      console.error(err);
       res.status(500).json({ success: false, message: 'Server error' });
     }
   }
@@ -71,6 +72,7 @@ router.post('/login',
       const token = signToken(user.id);
       res.json({ success: true, token, user });
     } catch (err) {
+      console.error(err);
       res.status(500).json({ success: false, message: 'Server error' });
     }
   }

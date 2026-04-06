@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/', async (_req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, name, description, price, duration, destinations, image_url FROM packages WHERE is_active = 1 ORDER BY created_at DESC'
+      "SELECT * FROM packages WHERE is_active = 1 AND status = 'active' ORDER BY created_at DESC"
     );
     res.json({ success: true, data: rows });
   } catch {
@@ -41,19 +41,19 @@ router.get('/admin/all', authenticate, requireAdmin, async (_req, res) => {
 // POST /api/packages
 router.post('/', authenticate, requireAdmin,
   body('name').trim().notEmpty(),
-  body('price').isFloat({ min: 0 }),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(422).json({ success: false, errors: errors.array() });
 
-    const { name, description, price, duration, destinations, image_url } = req.body;
+    const { name, minPrice, maxPrice, duration, destination, includes, type, status } = req.body;
     try {
       const [result] = await pool.query(
-        'INSERT INTO packages (name, description, price, duration, destinations, image_url) VALUES (?, ?, ?, ?, ?, ?)',
-        [name, description || null, price, duration || null, destinations || null, image_url || null]
+        'INSERT INTO packages (name, price, max_price, duration, destinations, includes, type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [name, minPrice || 0, maxPrice || 0, duration || null, destination || null, includes || null, type || 'Leisure', status || 'active']
       );
       res.status(201).json({ success: true, id: result.insertId });
-    } catch {
+    } catch(err) {
+      console.error(err)
       res.status(500).json({ success: false, message: 'Server error' });
     }
   }
@@ -61,14 +61,15 @@ router.post('/', authenticate, requireAdmin,
 
 // PUT /api/packages/:id
 router.put('/:id', authenticate, requireAdmin, async (req, res) => {
-  const { name, description, price, duration, destinations, image_url, is_active } = req.body;
+  const { name, minPrice, maxPrice, duration, destination, includes, type, status } = req.body;
   try {
     await pool.query(
-      'UPDATE packages SET name=?, description=?, price=?, duration=?, destinations=?, image_url=?, is_active=? WHERE id=?',
-      [name, description, price, duration, destinations, image_url, is_active ?? 1, req.params.id]
+      'UPDATE packages SET name=?, price=?, max_price=?, duration=?, destinations=?, includes=?, type=?, status=? WHERE id=?',
+      [name, minPrice || 0, maxPrice || 0, duration, destination, includes, type, status, req.params.id]
     );
     res.json({ success: true });
-  } catch {
+  } catch(err) {
+    console.error(err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });

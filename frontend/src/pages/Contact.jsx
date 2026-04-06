@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { contactAPI } from '../utils/api';
 
 const SUBJECTS = [
-  'Flight Booking Inquiry',
-  'Booking Cancellation',
-  'Refund Request',
-  'PNR & Status',
+  'Flight Inquiry',
+  'Package Customization',
+  'Group Booking',
+  'Visa Assistance',
   'Technical Issue',
   'Partnership',
   'Other',
@@ -298,9 +298,9 @@ shadow-lg hover:shadow-[0_0_25px_rgba(249,115,22,0.35)] text-white px-4 py-2 rou
                 <h3 className="font-bold text-slate-900 dark:text-white mb-4">Common Questions</h3>
                 <div className="space-y-3">
                   {[
-                    'How do I cancel my booking?',
-                    'When will I get my refund?',
-                    'How do I check my PNR status?',
+                    'How long does it take for an expert to call?',
+                    'What airlines do you support?',
+                    'Can you help with international visas?',
                   ].map((q) => (
                     <div key={q} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer group">
                       <span className="text-primary-500 mt-0.5 group-hover:text-primary-600">›</span>

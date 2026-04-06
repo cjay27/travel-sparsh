@@ -1,26 +1,25 @@
 require('dotenv').config();
-const express    = require('express');
-const cors       = require('cors');
-const helmet     = require('helmet');
-const rateLimit  = require('express-rate-limit');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 // ── Import routes ──────────────────────────────────────────────
-const authRoutes     = require('./routes/auth');
-const adminRoutes    = require('./routes/admin');
-const bookingRoutes  = require('./routes/bookings');
-const contactRoutes  = require('./routes/contact');
-const airportRoutes  = require('./routes/airports');
-const airlineRoutes  = require('./routes/airlines');
-const packageRoutes  = require('./routes/packages');
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
+const contactRoutes = require('./routes/contact');
+const airportRoutes = require('./routes/airports');
+const airlineRoutes = require('./routes/airlines');
+const packageRoutes = require('./routes/packages');
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ── Security & CORS ────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
   origin: [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
+    process.env.FRONTEND_URL || 'http://localhost:5174',
     'http://localhost:3000',
   ],
   credentials: true,
@@ -46,22 +45,28 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // ── Routes ─────────────────────────────────────────────────────
-app.use('/api/auth',     authRoutes);
-app.use('/api/admin',    adminRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/contact',  contactRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/contact', contactRoutes);
 app.use('/api/airports', airportRoutes);
 app.use('/api/airlines', airlineRoutes);
 app.use('/api/packages', packageRoutes);
 
 // ── Health check ───────────────────────────────────────────────
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), env: process.env.NODE_ENV });
+app.get(['/health', '/api/health', '/healthcheck', '/api/healthcheck'], (_req, res) => {
+  res.json({
+    success: true,
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV
+  });
 });
 
-// ── 404 ────────────────────────────────────────────────────────
-app.use((_req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
+// ── 404 ─────────────────────,n ───────────────────────────────────
+app.use((req, res) => {
+  console.log(`[404] ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
 });
 
 // ── Global error handler ───────────────────────────────────────
@@ -72,8 +77,8 @@ app.use((err, _req, res, _next) => {
 
 // ── Start ──────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`🚀 Travel Sparsh API running on http://localhost:${PORT}`);
-  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Travel Sparsh API running on http://localhost:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 module.exports = app;

@@ -61,7 +61,7 @@ const About = () => {
             <span className="text-accent-400">One Flight at a Time</span>
           </h1>
           <p className="text-xl text-white/70 max-w-2xl mx-auto">
-            We're on a mission to make flight booking simple, affordable, and accessible for every Indian traveller.
+            We're on a mission to provide personalized travel expertise and the best flight deals for every Indian traveller through dedicated consultancy.
           </p>
         </div>
       </section>
@@ -81,7 +81,7 @@ const About = () => {
                   We partnered with <strong className="text-primary-600 dark:text-primary-400">Adivaha</strong>, India's most trusted white-label booking engine, to build a platform that puts the traveller first. Adivaha's powerful GDS connections give our users access to the best fares across all major airlines.
                 </p>
                 <p>
-                  Today, Travel Sparsh serves over 2 million travellers across India, helping them save time and money on every flight booking. We're not just a booking platform — we're your travel companion.
+                  Today, Travel Sparsh serves over 2 million travellers across India, providing them with expert guidance and the best market rates on every flight. We're not just a platform — we're your dedicated travel companion.
                 </p>
               </div>
               <div className="mt-8 flex gap-4">
@@ -124,7 +124,7 @@ const About = () => {
               <div className="text-4xl mb-4">🔭</div>
               <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4">Our Vision</h3>
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                To become India's most trusted flight booking platform, where 10 million travellers book their journeys with confidence. We envision a world where booking a flight is as simple as sending a text message.
+                To become India's most trusted travel consultancy, where 10 million travellers find their perfect journeys with expert confidence. We envision a world where planning a flight is as personal as a conversation.
               </p>
             </div>
           </div>
@@ -158,10 +158,10 @@ const About = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { target: 2000000, suffix: '+', label: 'Happy Travellers' },
-              { target: 50000, suffix: '+', label: 'Monthly Bookings' },
+              { target: 2000000, suffix: '+', label: 'Enquiries Handled' },
+              { target: 12000, suffix: '+', label: 'Expert Consultations' },
               { target: 100, suffix: '+', label: 'Airline Partners' },
-              { target: 500, suffix: '+', label: 'Destinations' },
+              { target: 500, suffix: '+', label: 'Global Destinations' },
             ].map((stat) => (
               <div key={stat.label}>
                 <div className="text-4xl md:text-5xl font-black text-white mb-2">
@@ -206,9 +206,8 @@ const About = () => {
       {/* Adivaha Partnership */}
       <section className="py-20 bg-slate-50 dark:bg-slate-800/30">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="section-title mb-6">Powered by <span className="gradient-text">Adivaha</span></h2>
           <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed mb-8">
-            Our booking engine is powered by Adivaha — India's premier white-label travel technology company. Adivaha's platform connects us directly to Global Distribution Systems (GDS) and airline inventory, ensuring you always get real-time pricing and instant confirmation.
+            Our experts use the Adivaha toolkit — India's premier travel technology infrastructure — to access real-time Global Distribution System (GDS) data. This allows us to find and secure the most competitive fares across global markets, providing you with elite travel planning. 
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
@@ -230,10 +229,10 @@ const About = () => {
       <section className="py-20 bg-white dark:bg-slate-900">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <h2 className="section-title mb-4">Start Your Journey Today</h2>
-          <p className="section-subtitle mb-8">Join millions of travellers who trust Travel Sparsh for their flight bookings.</p>
+          <p className="section-subtitle mb-8">Join millions of travellers who trust Travel Sparsh for expert travel planning.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register" className="btn-primary">Create Free Account</Link>
-            <Link to="/" className="btn-outline">Search Flights</Link>
+            <Link to="/contact" className="btn-outline">Enquire Now</Link>
           </div>
         </div>
       </section>

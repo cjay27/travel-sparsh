@@ -1,34 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { contactAPI } from '../utils/api';
-
-const AIRPORTS = [
-  { code: 'DEL', city: 'Delhi', name: 'Indira Gandhi International', state: 'Delhi' },
-  { code: 'BOM', city: 'Mumbai', name: 'Chhatrapati Shivaji Maharaj Intl', state: 'Maharashtra' },
-  { code: 'BLR', city: 'Bangalore', name: 'Kempegowda International', state: 'Karnataka' },
-  { code: 'MAA', city: 'Chennai', name: 'Chennai International', state: 'Tamil Nadu' },
-  { code: 'CCU', city: 'Kolkata', name: 'Netaji Subhas Chandra Bose Intl', state: 'West Bengal' },
-  { code: 'HYD', city: 'Hyderabad', name: 'Rajiv Gandhi International', state: 'Telangana' },
-  { code: 'AMD', city: 'Ahmedabad', name: 'Sardar Vallabhbhai Patel Intl', state: 'Gujarat' },
-  { code: 'PNQ', city: 'Pune', name: 'Pune International', state: 'Maharashtra' },
-  { code: 'GOI', city: 'Goa', name: 'Goa International (Dabolim)', state: 'Goa' },
-  { code: 'JAI', city: 'Jaipur', name: 'Jaipur International', state: 'Rajasthan' },
-  { code: 'COK', city: 'Kochi', name: 'Cochin International', state: 'Kerala' },
-  { code: 'GAU', city: 'Guwahati', name: 'Lokpriya Gopinath Bordoloi Intl', state: 'Assam' },
-  { code: 'IXC', city: 'Chandigarh', name: 'Shaheed Bhagat Singh Intl', state: 'Punjab' },
-  { code: 'BBI', city: 'Bhubaneswar', name: 'Biju Patnaik International', state: 'Odisha' },
-  { code: 'VTZ', city: 'Visakhapatnam', name: 'Visakhapatnam Airport', state: 'Andhra Pradesh' },
-  { code: 'TRV', city: 'Trivandrum', name: 'Trivandrum International', state: 'Kerala' },
-  { code: 'IXB', city: 'Bagdogra', name: 'Bagdogra Airport', state: 'West Bengal' },
-  { code: 'ATQ', city: 'Amritsar', name: 'Sri Guru Ram Dass Jee Intl', state: 'Punjab' },
-  { code: 'SXR', city: 'Srinagar', name: 'Sheikh ul-Alam International', state: 'J&K' },
-  { code: 'IXJ', city: 'Jammu', name: 'Jammu Airport', state: 'J&K' },
-];
-
-const AIRLINES = [
-  'Any Airline', 'IndiGo', 'Air India', 'SpiceJet', 'Vistara', 'GoAir',
-  'AirAsia India', 'Akasa Air', 'Star Air', 'Emirates', 'Qatar Airways',
-  'Singapore Airlines', 'Lufthansa', 'British Airways', 'Air France',
-];
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { contactAPI, airportsAPI, airlinesAPI } from '../utils/api';
 
 const VISA_TYPES = ['Tourist', 'Business', 'Student', 'Work', 'Transit', 'Medical', 'Other'];
 const TODAY = new Date().toISOString().split('T')[0];
@@ -38,13 +9,17 @@ const AirportInput = ({ label, value, onChange, placeholder, id }) => {
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [filtered, setFiltered] = useState([]);
+  const [loading, setLoading] = useState(false);
   const ref = useRef();
 
+  // Load existing value labels
   useEffect(() => {
-    if (value) {
-      const found = AIRPORTS.find((a) => a.code === value);
-      if (found) setQuery(`${found.city} (${found.code})`);
-    } else {
+    if (value && !query) {
+      airportsAPI.search(value).then(res => {
+        const found = res.data.data.find(a => a.iata_code === value);
+        if (found) setQuery(`${found.city} (${found.iata_code})`);
+      });
+    } else if (!value) {
       setQuery('');
     }
   }, [value]);
@@ -57,17 +32,21 @@ const AirportInput = ({ label, value, onChange, placeholder, id }) => {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const handleInput = (e) => {
+  const handleInput = async (e) => {
     const q = e.target.value;
     setQuery(q);
     onChange('');
-    if (q.length >= 1) {
-      setFiltered(AIRPORTS.filter(
-        (a) => a.city.toLowerCase().includes(q.toLowerCase()) ||
-          a.code.toLowerCase().includes(q.toLowerCase()) ||
-          a.name.toLowerCase().includes(q.toLowerCase())
-      ));
-      setShowDropdown(true);
+    if (q.length >= 2) {
+      setLoading(true);
+      try {
+        const res = await airportsAPI.search(q);
+        setFiltered(res.data.data.map(a => ({ ...a, code: a.iata_code })));
+        setShowDropdown(true);
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setLoading(false);
+      }
     } else {
       setShowDropdown(false);
     }
@@ -94,17 +73,22 @@ const AirportInput = ({ label, value, onChange, placeholder, id }) => {
           type="text"
           value={query}
           onChange={handleInput}
-          onFocus={() => { setFiltered(query.length >= 1 ? filtered : AIRPORTS.slice(0, 8)); setShowDropdown(true); }}
+          onFocus={() => { if (query.length >= 2) setShowDropdown(true); }}
           placeholder={placeholder}
-          className="w-full pl-9 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700/60 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-500"
+          className="w-full pl-9 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700/60 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-500"
           autoComplete="off"
         />
+        {loading && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <div className="animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full" />
+          </div>
+        )}
       </div>
       {showDropdown && filtered.length > 0 && (
         <div className="absolute top-full left-0 right-0 z-[100] mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-100 dark:border-slate-700 max-h-56 overflow-y-auto">
           {filtered.map((airport) => (
             <button
-              key={airport.code}
+              key={airport.id}
               type="button"
               onClick={() => handleSelect(airport)}
               className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50 last:border-0"
@@ -487,6 +471,21 @@ const DatePicker = ({ label, value, onChange, min, error, placeholder = 'Select 
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const FlightSearch = () => {
+  // Master data state
+  const [airlines, setAirlines] = useState(['Any Airline']);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const ailRes = await airlinesAPI.getAll();
+        setAirlines(['Any Airline', ...ailRes.data.data.map(a => a.name)]);
+      } catch (err) {
+        console.error('Error fetching master data', err);
+      }
+    };
+    fetchData();
+  }, []);
+
   // Trip
   const [tripType, setTripType] = useState('oneway');
   const [from, setFrom] = useState('');
@@ -573,26 +572,13 @@ const FlightSearch = () => {
     if (!validate()) return;
     setIsSubmitting(true);
     try {
-      const airportLabel = (code) => {
-        const a = AIRPORTS.find(x => x.code === code);
-        return a ? `${a.city} (${code})` : code;
-      };
-      const legLines = tripType === 'multicity'
-        ? cityLegs.map((leg, i) => `Flight ${i + 1}: ${airportLabel(leg.from)} → ${airportLabel(leg.to)} on ${leg.date}`)
-        : [];
       const msg = [
-        `FLIGHT ENQUIRY`,
-        `Trip: ${tripType === 'oneway' ? 'One Way' : tripType === 'roundtrip' ? 'Round Trip' : 'Multi-City'}`,
-        ...(tripType === 'multicity'
-          ? legLines
-          : [
-            `From: ${airportLabel(from)}`,
-            `To: ${airportLabel(to)}`,
-            `Departure: ${departDate}`,
-            tripType === 'roundtrip' ? `Return: ${returnDate}` : null,
-          ]
-        ),
-        `Travellers: ${adults} Adult${adults > 1 ? 's' : ''}${children > 0 ? `, ${children} Child` : ''}${infants > 0 ? `, ${infants} Infant` : ''}`,
+        `Trip: ${tripType}`,
+        `From: ${from}`,
+        `To: ${to}`,
+        `Departure: ${departDate}`,
+        tripType === 'roundtrip' ? `Return: ${returnDate}` : null,
+        `Travellers: ${adults}A, ${children}C, ${infants}I`,
         `Class: ${travelClass}`,
         `Purpose: ${travelPurpose}`,
         `Visa: ${hasVisa ? `Yes (${visaType || 'unspecified'})` : 'No'}`,
@@ -602,10 +588,29 @@ const FlightSearch = () => {
         `Airline: ${preferredAirline}`,
       ].filter(Boolean).join('\n');
 
-      await contactAPI.submitContact({ name, email, phone, subject: 'Flight Enquiry', message: msg });
-    } catch (_) { /* show success regardless */ }
-    setIsSubmitting(false);
-    setSubmitted(true);
+      await contactAPI.submitContact({ 
+        name, 
+        email, 
+        phone, 
+        trip_type: tripType,
+        from_city: from,
+        to_city: to,
+        departure_date: departDate,
+        return_date: tripType === 'roundtrip' ? returnDate : null,
+        adults,
+        children,
+        infants,
+        cabin_class: travelClass,
+        message: msg 
+      });
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to submit enquiry. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ─── Success State ────────────────────────────────────────────────────────
@@ -697,7 +702,7 @@ const FlightSearch = () => {
                     {/* From */}
                     <div className="relative">
                       <AirportInput id={`mc-from-${i}`} label="From" value={leg.from}
-                        onChange={(v) => updateLeg(i, 'from', v)} placeholder="City or Airport" />
+                        onChange={(v) => updateLeg(i, 'from', v)} placeholder="City or Airport" airportsList={airports} />
                       {errors[`leg${i}from`] && <p className="text-red-500 text-xs mt-1">{errors[`leg${i}from`]}</p>}
                       {/* Swap arrow between From and To (desktop) */}
                       <div className="hidden sm:flex absolute -right-4 bottom-3 z-20 w-7 h-7 bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded-full items-center justify-center text-primary-600 shadow-sm pointer-events-none">
@@ -709,7 +714,7 @@ const FlightSearch = () => {
                     {/* To */}
                     <div>
                       <AirportInput id={`mc-to-${i}`} label="To" value={leg.to}
-                        onChange={(v) => updateLeg(i, 'to', v)} placeholder="City or Airport" />
+                        onChange={(v) => updateLeg(i, 'to', v)} placeholder="City or Airport" airportsList={airports} />
                       {errors[`leg${i}to`] && <p className="text-red-500 text-xs mt-1">{errors[`leg${i}to`]}</p>}
                     </div>
                     {/* Date */}
@@ -1073,7 +1078,7 @@ const FlightSearch = () => {
                 <p className={labelCls}>Preferred Airline</p>
                 <select value={preferredAirline} onChange={(e) => setPreferredAirline(e.target.value)}
                   className="w-full sm:w-72 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all">
-                  {AIRLINES.map(a => <option key={a} value={a}>{a}</option>)}
+                  {airlines.map(a => <option key={a} value={a}>{a}</option>)}
                 </select>
               </div>
             </div>

@@ -20,7 +20,7 @@ router.get('/', async (_req, res) => {
 // GET /api/airlines/admin/all
 router.get('/admin/all', authenticate, requireAdmin, async (_req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM airlines ORDER BY name');
+    const [rows] = await pool.query('SELECT *, code as iata, DATE_FORMAT(created_at, "%Y-%m-%d") as joined FROM airlines ORDER BY name');
     res.json({ success: true, data: rows });
   } catch {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -29,17 +29,17 @@ router.get('/admin/all', authenticate, requireAdmin, async (_req, res) => {
 
 // POST /api/airlines
 router.post('/', authenticate, requireAdmin,
-  body('code').trim().notEmpty(),
+  body('iata').trim().notEmpty(),
   body('name').trim().notEmpty(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(422).json({ success: false, errors: errors.array() });
 
-    const { code, name, logo_url, is_domestic = 1 } = req.body;
+    const { iata, name, is_domestic = 1, logo_url = null, country = 'India', type = 'LCC', routes = 0, commission = 0.0, status = 'active', contact = null } = req.body;
     try {
       const [result] = await pool.query(
-        'INSERT INTO airlines (code, name, logo_url, is_domestic) VALUES (?, ?, ?, ?)',
-        [code.toUpperCase(), name, logo_url || null, is_domestic]
+        'INSERT INTO airlines (code, name, is_domestic, logo_url, country, type, routes, commission, status, contact) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [iata.toUpperCase(), name, is_domestic, logo_url, country, type, routes, commission, status, contact]
       );
       res.status(201).json({ success: true, id: result.insertId });
     } catch (err) {
@@ -52,14 +52,15 @@ router.post('/', authenticate, requireAdmin,
 
 // PUT /api/airlines/:id
 router.put('/:id', authenticate, requireAdmin, async (req, res) => {
-  const { code, name, logo_url, is_domestic, is_active } = req.body;
+  const { iata, name, is_domestic, logo_url, is_active, country, type, routes, commission, status, contact } = req.body;
   try {
     await pool.query(
-      'UPDATE airlines SET code=?, name=?, logo_url=?, is_domestic=?, is_active=? WHERE id=?',
-      [code, name, logo_url || null, is_domestic ?? 1, is_active ?? 1, req.params.id]
+      'UPDATE airlines SET code=?, name=?, is_domestic=?, logo_url=?, is_active=?, country=?, type=?, routes=?, commission=?, status=?, contact=? WHERE id=?',
+      [iata || '', name, is_domestic ?? 1, logo_url, is_active ?? 1, country, type, routes, commission, status, contact, req.params.id]
     );
     res.json({ success: true });
-  } catch {
+  } catch(err) {
+    console.error(err)
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
