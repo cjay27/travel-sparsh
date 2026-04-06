@@ -5,7 +5,7 @@ const VISA_TYPES = ['Tourist', 'Business', 'Student', 'Work', 'Transit', 'Medica
 const TODAY = new Date().toISOString().split('T')[0];
 
 // ─── Airport Input ────────────────────────────────────────────────────────────
-const AirportInput = ({ label, value, onChange, placeholder, id }) => {
+const AirportInput = ({ label, value, onChange, onLabelChange, placeholder, id }) => {
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [filtered, setFiltered] = useState([]);
@@ -14,15 +14,21 @@ const AirportInput = ({ label, value, onChange, placeholder, id }) => {
 
   // Load existing value labels
   useEffect(() => {
-    if (value && !query) {
+    if (value && value !== query) {
+      // If we have a value but the query doesn't match it (e.g. initial load or swap)
       airportsAPI.search(value).then(res => {
         const found = res.data.data.find(a => a.iata_code === value);
-        if (found) setQuery(`${found.city} (${found.iata_code})`);
+        if (found) {
+          setQuery(found.iata_code);
+          if (onLabelChange) onLabelChange(`${found.city} (${found.iata_code})`);
+        }
       });
-    } else if (!value) {
+    } else if (!value && !showDropdown && query !== '') {
+      // Only clear if no value AND we aren't actively searching/typing
       setQuery('');
     }
-  }, [value]);
+  }, [value]); // Only depend on value changes from parent
+
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -36,6 +42,7 @@ const AirportInput = ({ label, value, onChange, placeholder, id }) => {
     const q = e.target.value;
     setQuery(q);
     onChange('');
+    if (onLabelChange) onLabelChange('');
     if (q.length >= 2) {
       setLoading(true);
       try {
@@ -53,8 +60,9 @@ const AirportInput = ({ label, value, onChange, placeholder, id }) => {
   };
 
   const handleSelect = (airport) => {
-    setQuery(`${airport.city} (${airport.code})`);
+    setQuery(airport.code);
     onChange(airport.code);
+    if (onLabelChange) onLabelChange(`${airport.city} (${airport.code})`);
     setShowDropdown(false);
   };
 
@@ -490,6 +498,9 @@ const FlightSearch = () => {
   const [tripType, setTripType] = useState('oneway');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [fromLabel, setFromLabel] = useState('');
+  const [toLabel, setToLabel] = useState('');
+
   const [departDate, setDepartDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [adults, setAdults] = useState(1);
@@ -499,10 +510,10 @@ const FlightSearch = () => {
 
   // Multi-city legs
   const [cityLegs, setCityLegs] = useState([
-    { from: '', to: '', date: '' },
-    { from: '', to: '', date: '' },
+    { from: '', to: '', date: '', fromLabel: '', toLabel: '' },
+    { from: '', to: '', date: '', fromLabel: '', toLabel: '' },
   ]);
-  const addLeg = () => setCityLegs(prev => [...prev, { from: '', to: '', date: '' }]);
+  const addLeg = () => setCityLegs(prev => [...prev, { from: '', to: '', date: '', fromLabel: '', toLabel: '' }]);
   const removeLeg = (i) => setCityLegs(prev => prev.filter((_, idx) => idx !== i));
   const updateLeg = (i, field, val) => setCityLegs(prev => prev.map((leg, idx) => idx === i ? { ...leg, [field]: val } : leg));
 
@@ -539,7 +550,11 @@ const FlightSearch = () => {
   }, []);
 
   const totalPax = adults + children + infants;
-  const swapCities = () => { const t = from; setFrom(to); setTo(t); };
+  const swapCities = () => {
+    const tCode = from; setFrom(to); setTo(tCode);
+    const tLabel = fromLabel; setFromLabel(toLabel); setToLabel(tLabel);
+  };
+
 
   const validate = () => {
     const e = {};
@@ -574,11 +589,16 @@ const FlightSearch = () => {
     try {
       const msg = [
         `Trip: ${tripType}`,
-        `From: ${from}`,
-        `To: ${to}`,
-        `Departure: ${departDate}`,
+        ...(tripType === 'multicity'
+          ? cityLegs.map((leg, i) => `Flight ${i + 1}: ${leg.fromLabel || leg.from} → ${leg.toLabel || leg.to} on ${leg.date}`)
+          : [
+            `From: ${fromLabel}`,
+            `To: ${toLabel}`,
+            `Departure: ${departDate}`,
+          ]
+        ),
         tripType === 'roundtrip' ? `Return: ${returnDate}` : null,
-        `Travellers: ${adults}A, ${children}C, ${infants}I`,
+        `Travellers: ${adults}  Adults, ${children} Children, ${infants} Infants`,
         `Class: ${travelClass}`,
         `Purpose: ${travelPurpose}`,
         `Visa: ${hasVisa ? `Yes (${visaType || 'unspecified'})` : 'No'}`,
@@ -588,20 +608,20 @@ const FlightSearch = () => {
         `Airline: ${preferredAirline}`,
       ].filter(Boolean).join('\n');
 
-      await contactAPI.submitContact({ 
-        name, 
-        email, 
-        phone, 
+      await contactAPI.submitContact({
+        name,
+        email,
+        phone,
         trip_type: tripType,
-        from_city: from,
-        to_city: to,
-        departure_date: departDate,
+        from_city: tripType === 'multicity' ? (cityLegs[0]?.fromLabel || cityLegs[0]?.from) : (fromLabel || from),
+        to_city: tripType === 'multicity' ? (cityLegs[cityLegs.length - 1]?.toLabel || cityLegs[cityLegs.length - 1]?.to) : (toLabel || to),
+        departure_date: tripType === 'multicity' ? cityLegs[0]?.date : departDate,
         return_date: tripType === 'roundtrip' ? returnDate : null,
         adults,
         children,
         infants,
         cabin_class: travelClass,
-        message: msg 
+        message: msg
       });
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -630,7 +650,15 @@ const FlightSearch = () => {
             <span key={b} className="text-xs font-semibold text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">{b}</span>
           ))}
         </div>
-        <button onClick={() => { setSubmitted(false); setFrom(''); setTo(''); setDepartDate(''); setReturnDate(''); setName(''); setPhone(''); setEmail(''); setCityLegs([{ from: '', to: '', date: '' }, { from: '', to: '', date: '' }]); }}
+        <button onClick={() => {
+          setSubmitted(false);
+          setFrom(''); setTo('');
+          setFromLabel(''); setToLabel('');
+          setDepartDate(''); setReturnDate('');
+          setName(''); setPhone(''); setEmail('');
+          setCityLegs([{ from: '', to: '', date: '', fromLabel: '', toLabel: '' }, { from: '', to: '', date: '', fromLabel: '', toLabel: '' }]);
+        }}
+
           className="text-primary-600 hover:text-primary-700 font-semibold text-sm hover:underline">
           ← Search Another Flight
         </button>
@@ -702,7 +730,9 @@ const FlightSearch = () => {
                     {/* From */}
                     <div className="relative">
                       <AirportInput id={`mc-from-${i}`} label="From" value={leg.from}
-                        onChange={(v) => updateLeg(i, 'from', v)} placeholder="City or Airport" airportsList={airports} />
+                        onChange={(v) => updateLeg(i, 'from', v)}
+                        onLabelChange={(v) => updateLeg(i, 'fromLabel', v)}
+                        placeholder="City or Airport" />
                       {errors[`leg${i}from`] && <p className="text-red-500 text-xs mt-1">{errors[`leg${i}from`]}</p>}
                       {/* Swap arrow between From and To (desktop) */}
                       <div className="hidden sm:flex absolute -right-4 bottom-3 z-20 w-7 h-7 bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded-full items-center justify-center text-primary-600 shadow-sm pointer-events-none">
@@ -714,9 +744,12 @@ const FlightSearch = () => {
                     {/* To */}
                     <div>
                       <AirportInput id={`mc-to-${i}`} label="To" value={leg.to}
-                        onChange={(v) => updateLeg(i, 'to', v)} placeholder="City or Airport" airportsList={airports} />
+                        onChange={(v) => updateLeg(i, 'to', v)}
+                        onLabelChange={(v) => updateLeg(i, 'toLabel', v)}
+                        placeholder="City or Airport" />
                       {errors[`leg${i}to`] && <p className="text-red-500 text-xs mt-1">{errors[`leg${i}to`]}</p>}
                     </div>
+
                     {/* Date */}
                     <div>
                       <DatePicker
@@ -800,7 +833,8 @@ const FlightSearch = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-9 gap-3 items-end">
               {/* From – col-span-2 */}
               <div className="lg:col-span-2 relative">
-                <AirportInput id="from" label="From" value={from} onChange={setFrom} placeholder="City or Airport" />
+                <AirportInput id="from" label="From" value={from}
+                  onChange={setFrom} onLabelChange={setFromLabel} placeholder="City or Airport" />
                 {errors.from && <p className="text-red-500 text-xs mt-1">{errors.from}</p>}
                 {/* Swap */}
                 <button type="button" onClick={swapCities}
@@ -812,13 +846,13 @@ const FlightSearch = () => {
                 </button>
               </div>
 
-              {/* To – col-span-2 */}
               <div className="lg:col-span-2">
-                <AirportInput id="to" label="To" value={to} onChange={setTo} placeholder="City or Airport" />
+                <AirportInput id="to" label="To" value={to}
+                  onChange={setTo} onLabelChange={setToLabel} placeholder="City or Airport" />
                 {errors.to && <p className="text-red-500 text-xs mt-1">{errors.to}</p>}
               </div>
 
-              {/* Departure – col-span-2 */}
+
               <div className="lg:col-span-2">
                 <DatePicker
                   label="Departure"
@@ -830,7 +864,6 @@ const FlightSearch = () => {
                 />
               </div>
 
-              {/* Return – col-span-2 */}
               <div className="lg:col-span-2">
                 <DatePicker
                   label={tripType !== 'roundtrip' ? 'Return (optional)' : 'Return'}
@@ -841,7 +874,6 @@ const FlightSearch = () => {
                   placeholder="Return date"
                 />
               </div>
-
               {/* Travellers – col-span-1 */}
               <div className="lg:col-span-1 relative" ref={paxRef}>
                 <label className={labelCls}>Travellers</label>

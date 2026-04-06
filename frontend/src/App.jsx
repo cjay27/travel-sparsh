@@ -21,6 +21,8 @@ import Customers from './pages/admin/Customers';
 import Packages from './pages/admin/Packages';
 import Airports from './pages/admin/Airports';
 import Testimonials from './pages/admin/Testimonials';
+import Newsletter from './pages/admin/Newsletter';
+
 
 
 
@@ -81,6 +83,8 @@ function App() {
               <Route path="/admin/packages" element={<Packages />} />
               <Route path="/admin/airports" element={<Airports />} />
               <Route path="/admin/testimonials" element={<Testimonials />} />
+              <Route path="/admin/newsletter" element={<Newsletter />} />
+
 
 
 

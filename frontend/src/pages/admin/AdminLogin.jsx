@@ -95,11 +95,11 @@ const AdminLogin = () => {
             </form>
 
             {/* Hint */}
-            <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
+            {/* <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
               <p className="text-xs text-slate-500 font-medium mb-1">Demo credentials:</p>
               <p className="text-xs text-slate-600 font-mono">admin@travelsparsh.com</p>
               <p className="text-xs text-slate-600 font-mono">Admin@123</p>
-            </div>
+            </div> */}
 
             <p className="text-center text-xs text-slate-400 mt-5">
               <a href="/" className="hover:text-blue-600 transition-colors">← Back to website</a>

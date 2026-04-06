@@ -47,7 +47,7 @@ export const authAPI = {
 export const contactAPI = {
   submitContact: (data)    => api.post('/contact', data),
   getMyEnquiries:(params)  => api.get('/contact/my', { params }),
-  subscribe:     (email)   => api.post('/contact/subscribe', { email }),
+
   // Admin
   getAll:        (params)  => api.get('/contact/admin/all', { params }),
   updateStatus:  (id, status) => api.patch(`/contact/admin/${id}/status`, { status }),
@@ -95,6 +95,15 @@ export const testimonialsAPI = {
   update:     (id, data) => api.put(`/testimonials/${id}`, data),
   remove:     (id)   => api.delete(`/testimonials/${id}`),
 };
+
+// Newsletter
+export const newsletterAPI = {
+  subscribe:    (email)      => api.post('/newsletter/subscribe', { email }),
+  getAll:       (params)     => api.get('/newsletter', { params }),
+  updateStatus: (id, status) => api.patch(`/newsletter/${id}`, { status }),
+  delete:       (id)         => api.delete(`/newsletter/${id}`),
+};
+
 
 
 // Admin

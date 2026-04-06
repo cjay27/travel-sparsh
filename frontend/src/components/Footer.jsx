@@ -1,6 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
+import logo from '../../assets/images/logo.png';
+import { newsletterAPI } from '../utils/api';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
@@ -19,10 +21,18 @@ const Footer = () => {
     }
   }, [location, navigate]);
 
-  const handleSubscribe = (e) => {
+  const handleSubscribe = async (e) => {
     e.preventDefault();
-    if (email) { setSubscribed(true); setEmail(''); }
+    if (!email) return;
+    try {
+      await newsletterAPI.subscribe(email);
+      setSubscribed(true);
+      setEmail('');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Subscription failed');
+    }
   };
+
 
   const POPULAR_ROUTES = [
     'Delhi → Mumbai', 'Mumbai → Bangalore', 'Delhi → Goa',
@@ -39,16 +49,15 @@ const Footer = () => {
 
           {/* Brand */}
           <div className="lg:col-span-1">
-            <button onClick={() => scrollTo('home')} className="flex items-center gap-2.5 mb-5 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-md">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
+            <button onClick={() => scrollTo('home')} className="flex items-center gap-3 mb-6 group text-left">
+              <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center p-2 shadow-inner border border-white/5 transition-transform duration-300 group-hover:scale-105">
+                <img src={logo} alt="Travel Sparsh" className="w-full h-full object-contain filter brightness-110" />
               </div>
-              <span className="text-xl font-black text-white">
-                Travel<span className="text-primary-400">Sparsh</span>
+              <span className="text-2xl font-black text-white tracking-tighter">
+                Travel <span className="">Sparsh</span>
               </span>
             </button>
+
             <p className="text-sm leading-relaxed mb-5">
               Your personal travel expert — finding the best flight deals on domestic and international routes so you can travel more for less.
             </p>
@@ -153,7 +162,7 @@ const Footer = () => {
               <h3 className="text-white font-bold text-sm uppercase tracking-widest mb-5">Contact</h3>
               {[
                 { icon: '📞', label: '+91 98765 43210' },
-                { icon: '✉️', label: 'hello@travelsparsh.in' },
+                { icon: '✉️', label: 'travelsparsh@gmail.com' },
                 { icon: '⏰', label: '24 × 7 Support' },
               ].map(c => (
                 <div key={c.label} className="flex items-center gap-2 text-sm hover:text-primary-400 transition-colors cursor-default">
