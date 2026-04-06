@@ -64,7 +64,7 @@ app.use('/api/newsletter', newsletterRoutes);
 
 
 // ── Health check ───────────────────────────────────────────────
-app.get(['/health', '/api/health', '/healthcheck', '/api/healthcheck'], (_req, res) => {
+app.get(['/', '/health', '/api/health', '/healthcheck', '/api/healthcheck'], (_req, res) => {
   res.json({
     success: true,
     status: 'ok',
