@@ -8,26 +8,65 @@ const api = axios.create({
   timeout: 15000,
 });
 
+// Loading state management for interceptors
+let loaderCount = 0;
+let onLoadingChange = null;
+
+export const setLoaderCallback = (callback) => {
+  onLoadingChange = callback;
+};
+
+const startLoading = () => {
+  if (loaderCount === 0 && onLoadingChange) onLoadingChange(true);
+  loaderCount++;
+};
+
+const stopLoading = () => {
+  loaderCount = Math.max(0, loaderCount - 1);
+  if (loaderCount === 0 && onLoadingChange) onLoadingChange(false);
+};
+
 // Attach JWT token on every request
 api.interceptors.request.use(
   (config) => {
+    // Only show loader for non-GET requests or admin requests to avoid flickering on simple background fetches
+    // Actually, user wants it "wherever API calls happens", but let's be strategic
+    if (config.url.includes('/admin') || config.method !== 'get') {
+      startLoading();
+    }
     const token = localStorage.getItem('travel_sparsh_token');
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    stopLoading();
+    return Promise.reject(error);
+  }
 );
 
-// Handle 401 globally
+// Handle 401 and stop loading
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    stopLoading();
+    return response;
+  },
   (error) => {
+    stopLoading();
     if (error.response?.status === 401) {
+      // Clear all possible session keys
       localStorage.removeItem('travel_sparsh_token');
       localStorage.removeItem('travel_sparsh_user');
-      if (!window.location.pathname.startsWith('/login') &&
-          !window.location.pathname.startsWith('/register') &&
-          !window.location.pathname.startsWith('/admin')) {
+      localStorage.removeItem('ts_admin_session'); 
+
+      const pathname = window.location.pathname;
+
+      if (pathname.startsWith('/admin')) {
+        // Only redirect if we're not ALREADY on the admin login page
+        if (pathname !== '/admin/login') {
+          window.location.href = '/admin/login';
+        }
+      } else if (pathname !== '/login' && pathname !== '/register') {
+        // For general users, redirect to /login
         window.location.href = '/login';
       }
     }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
+import { useLoading } from '../../context/LoadingContext';
 import logo from '../../../assets/images/logo.png';
 
 const NAV_ITEMS = [
@@ -74,7 +75,17 @@ const NAV_ITEMS = [
 ];
 
 const Sidebar = ({ admin, logout, navigate, location, setSidebarOpen }) => {
+  const { showLoader, hideLoader } = useLoading();
   const handleLogout = () => { logout(); navigate('/admin/login'); };
+
+  const handleNav = (path) => {
+    if (location.pathname === path) {
+      setSidebarOpen(false);
+      return;
+    }
+    setSidebarOpen(false);
+    navigate(path);
+  };
 
   return (
     <aside className="flex flex-col h-full bg-[#003d54] text-white">
@@ -96,7 +107,7 @@ const Sidebar = ({ admin, logout, navigate, location, setSidebarOpen }) => {
         {NAV_ITEMS.map(item => {
           const active = item.path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(item.path);
           return (
-            <button key={item.path} onClick={() => { navigate(item.path); setSidebarOpen(false); }}
+            <button key={item.path} onClick={() => handleNav(item.path)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 text-left group ${active
                 ? 'bg-white text-[#003d54] shadow-lg shadow-black/10'
                 : 'text-blue-100/70 hover:bg-white/10 hover:text-white'

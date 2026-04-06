@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AdminProvider } from './context/AdminContext';
+import { LoadingProvider, useLoading } from './context/LoadingContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -59,40 +60,68 @@ const NotFound = () => (
   </div>
 );
 
+const AdminRouteWatcher = () => {
+  const location = useLocation();
+  const { showLoader, hideLoader } = useLoading();
+  const [prevPath, setPrevPath] = React.useState(location.pathname);
+
+  React.useEffect(() => {
+    let isActive = false;
+    if (location.pathname.startsWith('/admin') && location.pathname !== prevPath) {
+      showLoader();
+      isActive = true;
+      const timer = setTimeout(() => {
+        if (isActive) {
+          hideLoader();
+          isActive = false;
+        }
+      }, 600);
+      setPrevPath(location.pathname);
+      return () => {
+        clearTimeout(timer);
+        if (isActive) hideLoader();
+      };
+    }
+    setPrevPath(location.pathname);
+  }, [location.pathname, showLoader, hideLoader, prevPath]);
+
+  return null;
+};
+
 function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AuthProvider>
-          <AdminProvider>
-            <Routes>
-              {/* Public routes (with Navbar + Footer) */}
-              <Route path="/" element={<AppLayout><Home /></AppLayout>} />
-              <Route path="/about" element={<AppLayout><About /></AppLayout>} />
-              <Route path="/contact" element={<AppLayout><Contact /></AppLayout>} />
-              <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
+        <LoadingProvider>
+          <AdminRouteWatcher />
+          <AuthProvider>
+            <AdminProvider>
+              <Routes>
+                {/* Public routes (with Navbar + Footer) */}
+                <Route path="/" element={<AppLayout><Home /></AppLayout>} />
+                <Route path="/about" element={<AppLayout><About /></AppLayout>} />
+                <Route path="/contact" element={<AppLayout><Contact /></AppLayout>} />
+                <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
 
-              <Route path="/dashboard" element={<AppLayout><ProtectedRoute><Dashboard /></ProtectedRoute></AppLayout>} />
+                <Route path="/dashboard" element={<AppLayout><ProtectedRoute><Dashboard /></ProtectedRoute></AppLayout>} />
 
-              {/* Admin routes (no Navbar/Footer, AdminContext handles auth) */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/airlines" element={<Airlines />} />
-              <Route path="/admin/users" element={<Users />} />
-              <Route path="/admin/customers" element={<Customers />} />
-              <Route path="/admin/packages" element={<Packages />} />
-              <Route path="/admin/airports" element={<Airports />} />
-              <Route path="/admin/testimonials" element={<Testimonials />} />
-              <Route path="/admin/newsletter" element={<Newsletter />} />
+                {/* Admin routes (no Navbar/Footer, AdminContext handles auth) */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/airlines" element={<Airlines />} />
+                <Route path="/admin/users" element={<Users />} />
+                <Route path="/admin/customers" element={<Customers />} />
+                <Route path="/admin/packages" element={<Packages />} />
+                <Route path="/admin/airports" element={<Airports />} />
+                <Route path="/admin/testimonials" element={<Testimonials />} />
+                <Route path="/admin/newsletter" element={<Newsletter />} />
 
-
-
-
-              {/* 404 */}
-              <Route path="*" element={<AppLayout><NotFound /></AppLayout>} />
-            </Routes>
-          </AdminProvider>
-        </AuthProvider>
+                {/* 404 */}
+                <Route path="*" element={<AppLayout><NotFound /></AppLayout>} />
+              </Routes>
+            </AdminProvider>
+          </AuthProvider>
+        </LoadingProvider>
       </ThemeProvider>
     </BrowserRouter>
   );

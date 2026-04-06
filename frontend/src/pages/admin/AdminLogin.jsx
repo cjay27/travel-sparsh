@@ -48,7 +48,7 @@ const AdminLogin = () => {
                   </svg>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                     placeholder="Please Enter Email"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-300" />
                 </div>
               </div>
 
@@ -61,7 +61,7 @@ const AdminLogin = () => {
                   </svg>
                   <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-11 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                    className="w-full pl-10 pr-11 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-300" />
                   <button type="button" onClick={() => setShowPass(!showPass)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                     {showPass ? (

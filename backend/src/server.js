@@ -12,6 +12,7 @@ const airportRoutes = require('./routes/airports');
 const airlineRoutes = require('./routes/airlines');
 const packageRoutes = require('./routes/packages');
 const testimonialRoutes = require('./routes/testimonials');
+const newsletterRoutes = require('./routes/newsletter');
 
 
 const app = express();
@@ -55,6 +56,7 @@ app.use('/api/airports', airportRoutes);
 app.use('/api/airlines', airlineRoutes);
 app.use('/api/packages', packageRoutes);
 app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/newsletter', newsletterRoutes);
 
 
 // ── Health check ───────────────────────────────────────────────

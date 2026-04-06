@@ -31,14 +31,28 @@ router.post('/subscribe', async (req, res) => {
 router.get('/', authenticate, requireAdmin, async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 20;
+  const search = req.query.search || '';
   const offset = (page - 1) * limit;
 
   try {
-    const [rows] = await pool.query(
-      'SELECT id, email, status, created_at FROM newsletter_subs ORDER BY created_at DESC LIMIT ? OFFSET ?',
-      [limit, offset]
-    );
-    const [count] = await pool.query('SELECT COUNT(*) as total FROM newsletter_subs');
+    let query = 'SELECT id, email, status, created_at FROM newsletter_subs';
+    let countQuery = 'SELECT COUNT(*) as total FROM newsletter_subs';
+    let params = [];
+    let countParams = [];
+
+    if (search) {
+      const filter = `%${search}%`;
+      query += ' WHERE email LIKE ?';
+      countQuery += ' WHERE email LIKE ?';
+      params.push(filter);
+      countParams.push(filter);
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
+    const [rows] = await pool.query(query, params);
+    const [count] = await pool.query(countQuery, countParams);
 
     res.json({
       status: 'success',
