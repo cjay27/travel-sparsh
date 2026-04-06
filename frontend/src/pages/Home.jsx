@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import FlightSearch from '../components/FlightSearch';
+import { testimonialsAPI } from '../utils/api';
+
 
 // ─── Utility Hooks ─────────────────────────────────────────────────────────────
 const useInView = (threshold = 0.12) => {
@@ -199,21 +201,48 @@ const STEPS = [
   { step: '03', Icon: Icons.Ticket, title: 'Fly at Best Price', desc: 'Pick your favourite deal. We handle everything — bookings to e-tickets.', color: 'from-emerald-500 to-teal-600' },
 ];
 
-const TESTIMONIALS = [
-  { name: 'Priya Sharma', city: 'Delhi', rating: 5, text: 'Saved ₹4,200 on my Mumbai round-trip. The expert was incredibly helpful and responsive. Best travel experience ever!', avatar: 'PS', bg: 'from-pink-500 to-rose-500' },
-  { name: 'Rahul Mehta', city: 'Bangalore', rating: 5, text: "Booked 6 flights through Travel Sparsh this year. Every time, the price was unbeatable and the process was seamless.", avatar: 'RM', bg: 'from-blue-500 to-indigo-500' },
-  { name: 'Anjali Nair', city: 'Kochi', rating: 5, text: 'Got a last-minute Goa deal that was ₹3,000 cheaper than anything I found online. Their team is absolutely brilliant.', avatar: 'AN', bg: 'from-purple-500 to-violet-500' },
-];
+
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 const Home = () => {
   const scrollY = useParallax();
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [testimonials, setTestimonials] = useState([]);
+  const [itemsPerView, setItemsPerView] = useState(3);
 
   useEffect(() => {
-    const id = setInterval(() => setActiveTestimonial(p => (p + 1) % TESTIMONIALS.length), 4500);
-    return () => clearInterval(id);
+    const handleResize = () => {
+      if (window.innerWidth < 640) setItemsPerView(1);
+      else if (window.innerWidth < 1024) setItemsPerView(2);
+      else setItemsPerView(3);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const res = await testimonialsAPI.getAll();
+        setTestimonials(res.data.data);
+      } catch (err) {
+        console.error('Failed to fetch testimonials');
+      }
+    };
+    fetch();
+  }, []);
+
+  useEffect(() => {
+    if (testimonials.length === 0) return;
+    const maxIdx = Math.max(0, testimonials.length - itemsPerView);
+    const id = setInterval(() => {
+      setActiveTestimonial(p => (p >= maxIdx ? 0 : p + 1));
+    }, 4500);
+    return () => clearInterval(id);
+  }, [testimonials, itemsPerView]);
+
+
 
   const scrollToForm = useCallback(() => {
     document.getElementById('home')?.scrollIntoView({ behavior: 'smooth' });
@@ -568,43 +597,60 @@ border border-white/40 dark:border-white/10/40">
             </h2>
           </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t, i) => (
-              <Reveal key={i} delay={i * 120} direction={i === 1 ? 'up' : i === 0 ? 'left' : 'right'}>
-                <div className={`relative p-7 rounded-2xl bg-white bg-white/95 dark:bg-[#020617]/95
-backdrop-blur-xl
-border border-white/40 dark:border-white/10 shadow-md border-2 transition-all duration-500 ${i === activeTestimonial ? 'border-primary-500 shadow-xl scale-[1.02]' : 'border-transparent hover:border-slate-200 dark:hover:border-slate-700'}`}>
-                  <svg className="w-8 h-8 text-primary-200 dark:text-primary-800 mb-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-                  </svg>
-                  <div className="flex gap-0.5 mb-3">
-                    {Array(t.rating).fill(0).map((_, j) => (
-                      <svg key={j} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 italic">"{t.text}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${t.bg} flex items-center justify-center text-white font-black text-sm flex-shrink-0`}>
-                      {t.avatar}
+          <div className="relative overflow-hidden px-1">
+            <div
+              className="flex transition-transform duration-700 ease-in-out"
+              style={{
+                transform: `translateX(-${activeTestimonial * (100 / testimonials.length)}%)`,
+                width: `${(testimonials.length / itemsPerView) * 100}%`
+              }}
+            >
+              {testimonials.map((t, i) => (
+                <div
+                  key={t.id}
+                  className="px-3"
+                  style={{ width: `${100 / testimonials.length}%` }}
+                >
+
+                  <div className={`relative p-7 rounded-2xl bg-white dark:bg-slate-800/40 backdrop-blur-xl border-2 transition-all duration-500 h-full shadow-sm hover:shadow-xl ${i >= activeTestimonial && i < activeTestimonial + itemsPerView ? 'opacity-100' : 'opacity-40 grayscale-[0.5]'} border-transparent hover:border-primary-500`}>
+                    <svg className="w-8 h-8 text-primary-200 dark:text-primary-800 mb-3" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+                    </svg>
+                    <div className="flex gap-0.5 mb-3">
+                      {Array(t.rating).fill(0).map((_, j) => (
+                        <svg key={j} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-900 dark:text-white text-sm">{t.name}</p>
-                      <p className="text-slate-400 text-xs">{t.city}</p>
+                    <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 italic">"{t.content}"</p>
+                    <div className="flex items-center gap-3">
+                      {t.profile_image_url ? (
+                        <img src={t.profile_image_url} alt={t.name} className="w-10 h-10 rounded-full object-cover shadow-sm bg-slate-100" />
+                      ) : (
+                        <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-black text-xs flex-shrink-0 shadow-sm border border-white/20`}>
+                          {t.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-bold text-slate-900 dark:text-white text-sm">{t.name}</p>
+                        <p className="text-slate-400 text-xs">{t.city}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </Reveal>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-center gap-2 mt-12">
+            {testimonials.slice(0, Math.max(1, testimonials.length - itemsPerView + 1)).map((_, i) => (
+              <button key={i} onClick={() => setActiveTestimonial(i)}
+                className={`rounded-full transition-all duration-300 ${i === activeTestimonial ? 'w-8 h-2.5 bg-primary-600' : 'w-2.5 h-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-400'}`} />
             ))}
           </div>
 
-          <div className="flex justify-center gap-2 mt-8">
-            {TESTIMONIALS.map((_, i) => (
-              <button key={i} onClick={() => setActiveTestimonial(i)}
-                className={`rounded-full transition-all duration-300 ${i === activeTestimonial ? 'w-6 h-2.5 bg-primary-600' : 'w-2.5 h-2.5 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'}`} />
-            ))}
-          </div>
+
         </div>
       </section>
 

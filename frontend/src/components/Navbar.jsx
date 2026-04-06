@@ -131,7 +131,7 @@ const Navbar = () => {
       `}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-[68px] gap-4">
+        <div className="flex items-center justify-between h-[100px] gap-4">
 
           {/* ── Logo ─────────────────────────────────────────────────── */}
           <button onClick={() => scrollTo('home')}
@@ -139,7 +139,7 @@ const Navbar = () => {
           >
             {/* Logo Placeholder (Replace with your actual blue logo later) */}
             <img src={logo} alt="Travel Sparsh"
-              className="h-16 md:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              className="h-24 md:h-24 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               onError={(e) => {
                 // Fallback for styling/testing if logo isn't there yet
                 e.target.style.display = 'none';

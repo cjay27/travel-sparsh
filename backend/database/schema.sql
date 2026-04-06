@@ -105,6 +105,21 @@ CREATE TABLE IF NOT EXISTS subscribers (
   created_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- ── Testimonials ──────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS testimonials (
+  id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name              VARCHAR(255) NOT NULL,
+  city              VARCHAR(100) DEFAULT NULL,
+  rating            TINYINT UNSIGNED NOT NULL DEFAULT 5,
+  content           TEXT NOT NULL,
+  profile_image_url LONGTEXT DEFAULT NULL,
+
+  is_active         TINYINT(1) NOT NULL DEFAULT 1,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+
 -- ── Admin Activity Log ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS admin_logs (
   id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -157,6 +172,13 @@ INSERT IGNORE INTO airports (iata_code, name, city, state) VALUES
   ('DED', 'Jolly Grant Airport', 'Dehradun', 'Uttarakhand'),
   ('UDR', 'Maharana Pratap Airport', 'Udaipur', 'Rajasthan'),
   ('IDR', 'Devi Ahilya Bai Holkar Airport', 'Indore', 'Madhya Pradesh');
+
+-- Sample Testimonials
+INSERT IGNORE INTO testimonials (name, city, rating, content) VALUES
+  ('Priya Sharma', 'Delhi', 5, 'Saved ₹4,200 on my Mumbai round-trip. The expert was incredibly helpful and responsive. Best travel experience ever!'),
+  ('Rahul Mehta', 'Bangalore', 5, "Booked 6 flights through Travel Sparsh this year. Every time, the price was unbeatable and the process was seamless."),
+  ('Anjali Nair', 'Kochi', 5, 'Got a last-minute Goa deal that was ₹3,000 cheaper than anything I found online. Their team is absolutely brilliant.');
+
 
 -- Major airlines
 INSERT IGNORE INTO airlines (code, name, is_domestic) VALUES

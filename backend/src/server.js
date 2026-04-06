@@ -11,6 +11,8 @@ const contactRoutes = require('./routes/contact');
 const airportRoutes = require('./routes/airports');
 const airlineRoutes = require('./routes/airlines');
 const packageRoutes = require('./routes/packages');
+const testimonialRoutes = require('./routes/testimonials');
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,17 +43,19 @@ app.use('/api/auth/', rateLimit({
 }));
 
 // ── Body parser ────────────────────────────────────────────────
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '5mb' }));
+
 app.use(express.urlencoded({ extended: true }));
 
 // ── Routes ─────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/admin', adminRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/airports', airportRoutes);
 app.use('/api/airlines', airlineRoutes);
 app.use('/api/packages', packageRoutes);
+app.use('/api/testimonials', testimonialRoutes);
+
 
 // ── Health check ───────────────────────────────────────────────
 app.get(['/health', '/api/health', '/healthcheck', '/api/healthcheck'], (_req, res) => {

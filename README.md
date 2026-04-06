@@ -109,13 +109,6 @@ SMTP_PASS=admin_user_password
 
 ---
 
-## 👤 Default Admin Account
-
-- **Email**: `admin@travelsparsh.com`
-- **Password**: `Admin@123`
-
----
-
 ## 📄 License
 
 This project is private. All rights reserved © Travel Sparsh.

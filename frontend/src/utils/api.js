@@ -86,6 +86,17 @@ export const packagesAPI = {
   remove:    (id)   => api.delete(`/packages/${id}`),
 };
 
+// Testimonials
+export const testimonialsAPI = {
+  getAll:     ()     => api.get('/testimonials'),
+  // Admin
+  adminAll:   ()     => api.get('/testimonials/admin/all'),
+  create:     (data) => api.post('/testimonials', data),
+  update:     (id, data) => api.put(`/testimonials/${id}`, data),
+  remove:     (id)   => api.delete(`/testimonials/${id}`),
+};
+
+
 // Admin
 export const adminAPI = {
   getStats:    ()            => api.get('/admin/stats'),

@@ -20,6 +20,8 @@ import Users from './pages/admin/Users';
 import Customers from './pages/admin/Customers';
 import Packages from './pages/admin/Packages';
 import Airports from './pages/admin/Airports';
+import Testimonials from './pages/admin/Testimonials';
+
 
 
 // Layout wrapper to handle pages that don't need footer
@@ -78,6 +80,8 @@ function App() {
               <Route path="/admin/customers" element={<Customers />} />
               <Route path="/admin/packages" element={<Packages />} />
               <Route path="/admin/airports" element={<Airports />} />
+              <Route path="/admin/testimonials" element={<Testimonials />} />
+
 
 
               {/* 404 */}
